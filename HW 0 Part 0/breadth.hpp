@@ -2,8 +2,8 @@
 //  breadth.hpp
 //  CS 776 HW 0 Part 0
 //
-//  Created by Nick Zerbel on 8/30/17.
-//  Copyright © 2017 Nick Zerbel. All rights reserved.
+//  Created by Nicholas Zerbel on 8/30/17.
+//  Copyright © 2017 Nicholas Zerbel. All rights reserved.
 //
 
 #ifndef breadth_hpp

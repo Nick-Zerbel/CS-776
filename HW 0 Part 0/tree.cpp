@@ -2,8 +2,8 @@
 //  tree.cpp
 //  CS 776 HW 0 Part 0
 //
-//  Created by Nick Zerbel on 8/30/17.
-//  Copyright © 2017 Nick Zerbel. All rights reserved.
+//  Created by Nicholas Zerbel on 8/30/17.
+//  Copyright © 2017 Nicholas Zerbel. All rights reserved.
 //
 
 #include "tree.hpp"
@@ -23,7 +23,7 @@ void tree::create_node(int lev, int n_nodes, int a, int n_n, int p_n){
     
 }
 
-void tree::print_tree(){
+void tree::print_tree(){ //Prints out the entire tree to a txt file
     ofstream myfile;
     myfile.open("tree.txt");
     for(int i = 0; i < tree_vec.size(); i++){
