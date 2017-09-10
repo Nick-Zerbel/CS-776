@@ -1,0 +1,26 @@
+Script started on Sun 10 Sep 2017 03:51:44 PM PDT
+]0;nickz@nickz-VirtualBox: ~[01;32mnickz@nickz-VirtualBox[00m:[01;34m~[00m$ cd CS-776/HW0-P0
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW0-P0[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW0-P0[00m$ g++ -o sol main.cpp beach.hpp beach.cpp  tree.hpp tree.cpp breadth.hpp breadth.cpp
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW0-P0[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW0-P0[00m$ ./sol
+2 Person Boat:
+
+Boat Captain: 0
+Passenger Order:
+1
+0
+1
+0
+1
+0
+
+3 Person Boat:
+
+Boat Captain: 0
+Passenger Order:
+0	0
+1	1
+0	1
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW0-P0[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW0-P0[00m$ exit
+exit
+
+Script done on Sun 10 Sep 2017 03:53:03 PM PDT
