@@ -1,0 +1,25 @@
+Script started on Mon 11 Sep 2017 10:16:59 AM PDT
+]0;nickz@nickz-VirtualBox: ~[01;32mnickz@nickz-VirtualBox[00m:[01;34m~[00m$ cd CS-776/HW0-P1
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW0-P1[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW0-P1[00m$ g++ -o solver main.cpp hillclimber.hpp h illclimber.cpp eval.o
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW0-P1[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW0-P1[00m$ ./solver
+Enter maximum fitness value:
+100
+1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	
+Final Fitness = 100
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW0-P1[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW0-P1[00m$ g++ -o solver1 main.cpp hillclimber.hpp  hillclimber.cpp eval1.0[Ko
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW0-P1[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW0-P1[00m$ ./solver1
+Enter maximum fitness value:
+100
+0	0	1	0	1	1	0	0	0	0	1	1	0	1	1	0	0	1	0	1	1	0	1	1	0	1	0	0	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	1	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	0	
+Final Fitness = 70
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW0-P1[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW0-P1[00m$ g++ -c evalz.cpp -o evalz.o
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW0-P1[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW0-P1[00m$ g++ -o solverz main.cpp hillclimber.hpp  hillclimber.cpp evalz.o
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW0-P1[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW0-P1[00m$ ./solverz
+Enter maximum fitness value:
+1000
+0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	0	1	
+Final Fitness = 1000
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW0-P1[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW0-P1[00m$ exit
+exit
+
+Script done on Mon 11 Sep 2017 10:36:00 AM PDT
