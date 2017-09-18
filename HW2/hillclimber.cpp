@@ -38,25 +38,17 @@ void hillclimber::evaluate(){
 }
 
 void hillclimber::mutate(){
-    int p1, p2;
-    
-    p1 = rand() % 150;
-    p2 = rand() % 150;
-    
-	//Mutate vec
-    if(vec[p1] == 0){
-        vec[p1] = 1;
-    }
-    if(vec[p1] == 1){
-        vec[p1] = 0;
-    }
+    int p1;
 
-    if(vec[p2] == 0){
-        vec[p2] = 1;
-    }
-    if(vec[p2] == 1){
-        vec[p2] = 0;
-    }
+	for(int i = 0; i < 30; i++){
+		p1 = rand() % 5;
+		if(vec[p1+(i*5)] == 0){
+			vec[p1+(i*5)] = 1;
+		}
+		if(vec[p1+(i*5)] == 1){
+			vec[p1+(i*5)] = 0;
+		}
+	}
 
 	for(int i = 0; i < 150; i++){
 		p1 = rand() % 2;
