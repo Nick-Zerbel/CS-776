@@ -38,6 +38,7 @@ int main() {
     }
     sol.close();
     
+	cout << "Best Fitness: " << h.best_fit << endl;
     
     return 0;
 }
