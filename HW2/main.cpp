@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <cstdlib>
 #include "hillclimber.hpp"
 
 double eval(int *v);
@@ -18,22 +19,34 @@ int main() {
     int iterations = 1000000;
     
     ofstream myfile;
-    myfile.open("best-fitness.txt");
+    myfile.open("best-fitness.txt"); //Records best fitness found
+
+	ofstream sol;
+	sol.open("array.txt"); //Records initial array and best array at the end
     
     h.create_vec();
+
+	sol << "Initial Array:" << "\n";
+	for(int i = 0; i < 150; i++){
+		sol << h.best_vec[i] << "\t";
+	}
+	sol << endl;
+
     h.best_fit = eval(h.best_vec); //assign initial fitness
     for(int i = 0; i < iterations; i++){
-	cout << "iteration: " << i << endl;
+		if(i % 100000 == 0){
+			cout << "iteration: " << i << endl;
+		}
         h.mutate();
-        h.fitness = eval(h.vec);
+        h.fitness = eval(h.vec); //Fitness for mutating vector
+		h.r_fitness = eval(h.r_vec); //Fitness for completely random vector
         h.evaluate();
         myfile << h.best_fit << "\n";
     }
     
     myfile.close();
     
-    ofstream sol;
-    sol.open("best-solution.txt");
+	sol << "Final Array:" << "\n";
     for(int i = 0; i < 150; i++){
         sol << h.best_vec[i] << "\t";
     }

@@ -9,27 +9,28 @@
 #include "hillclimber.hpp"
 
 void hillclimber::create_vec(){
-    double r;
+    int r;
     for(int i = 0; i < 150; i++){
-        r = (double)(rand()/RAND_MAX);
-        if(r < 0.5){
-            vec[i] = 0;
-            best_vec[i] = 0;
-        }
-        if(r >= 0.5){
-            vec[i] = 1;
-            best_vec[i] = 1;
-        }
+        r = rand() % 2;
+		vec[i] = r;
+		best_vec[i] = r;
     }
 }
 
 void hillclimber::evaluate(){
-    if(fitness > best_fit){
+    if(fitness > best_fit){ //Compare to mutating vector
+		best_fit = fitness;
         for(int i = 0; i < 150; i++){
             best_vec[i] = vec[i];
         }
     }
-    if(best_fit >= fitness){
+    if(r_fitness > best_fit){ //Compare to random vector
+		best_fit = r_fitness;
+		for(int i = 0; i < 150; i++){
+			best_vec[i] = r_vec[i];
+		}
+	}
+    if(best_fit >= fitness){ //Assign best vec to mutating vector
         for(int i = 0; i < 150; i++){
             vec[i] = best_vec[i];
         }
@@ -42,13 +43,14 @@ void hillclimber::mutate(){
     p1 = rand() % 150;
     p2 = rand() % 150;
     
+	//Mutate vec
     if(vec[p1] == 0){
         vec[p1] = 1;
     }
     if(vec[p1] == 1){
         vec[p1] = 0;
     }
-    
+
     if(vec[p2] == 0){
         vec[p2] = 1;
     }
@@ -56,8 +58,8 @@ void hillclimber::mutate(){
         vec[p2] = 0;
     }
 
-    for(int i = 0; i < 150; i++){
-        assert(vec[i] == 0 || vec[i] == 1);
-	assert(best_vec[i] == 0 || best_vec[i] == 1);
-    }
+	for(int i = 0; i < 150; i++){
+		p1 = rand() % 2;
+		r_vec[i] = p1;
+	}
 }

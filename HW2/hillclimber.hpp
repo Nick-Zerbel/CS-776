@@ -18,6 +18,7 @@ using namespace std;
 class hillclimber{
 public:
     int vec[150]; //Array that gets mutated
+	int r_vec[150]; //Array that is being constantly mutated to enhance exploration
     int best_vec[150]; //Array that represents best solution found
     
     void create_vec();
@@ -25,6 +26,7 @@ public:
     void evaluate();
 
     double fitness;
+	double r_fitness;
     double best_fit;
 };
 
