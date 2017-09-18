@@ -10,7 +10,7 @@
 
 void hillclimber::create_vec(){
     double r;
-    for(int i = 0; i < 100; i++){
+    for(int i = 0; i < 150; i++){
         r = (double)(rand()/RAND_MAX);
         if(r < 0.5){
             vec[i] = 0;
@@ -54,5 +54,10 @@ void hillclimber::mutate(){
     }
     if(vec[p2] == 1){
         vec[p2] = 0;
+    }
+
+    for(int i = 0; i < 150; i++){
+        assert(vec[i] == 0 || vec[i] == 1);
+	assert(best_vec[i] == 0 || best_vec[i] == 1);
     }
 }

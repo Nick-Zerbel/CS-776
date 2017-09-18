@@ -15,7 +15,7 @@ double eval(int *v);
 int main() {
     hillclimber h;
     srand( time(NULL) );
-    int iterations = 1000000000;
+    int iterations = 1000000;
     
     ofstream myfile;
     myfile.open("best-fitness.txt");
@@ -23,6 +23,7 @@ int main() {
     h.create_vec();
     h.best_fit = eval(h.best_vec); //assign initial fitness
     for(int i = 0; i < iterations; i++){
+	cout << "iteration: " << i << endl;
         h.mutate();
         h.fitness = eval(h.vec);
         h.evaluate();
