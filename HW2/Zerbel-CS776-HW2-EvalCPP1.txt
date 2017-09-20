@@ -1,0 +1,38 @@
+Script started on Mon 18 Sep 2017 07:40:58 PM PDT
+]0;nickz@nickz-VirtualBox: ~[01;32mnickz@nickz-VirtualBox[00m:[01;34m~[00m$ cd CS-776/H@[KW2
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW2[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW2[00m$ g++ -o solver1 main.cpp hillclimber.hpp hil lclimber.cpp evalcpp1[K[K[K[KCPP1.o
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW2[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW2[00m$ ./solver1
+Best Fitness: 40
+Best Fitness: 48
+Best Fitness: 36
+Best Fitness: 40
+Best Fitness: 38
+Best Fitness: 44
+Best Fitness: 64
+Best Fitness: 36
+Best Fitness: 36
+Best Fitness: 48
+Best Fitness: 48
+Best Fitness: 40
+Best Fitness: 40
+Best Fitness: 48
+Best Fitness: 40
+Best Fitness: 40
+Best Fitness: 40
+Best Fitness: 48
+Best Fitness: 40
+Best Fitness: 40
+Best Fitness: 48
+Best Fitness: 48
+Best Fitness: 48
+Best Fitness: 46
+Best Fitness: 36
+Best Fitness: 40
+Best Fitness: 64
+Best Fitness: 36
+Best Fitness: 40
+Best Fitness: 36
+]0;nickz@nickz-VirtualBox: ~/CS-776/HW2[01;32mnickz@nickz-VirtualBox[00m:[01;34m~/CS-776/HW2[00m$ exit
+exit
+
+Script done on Tue 19 Sep 2017 05:15:28 PM PDT
