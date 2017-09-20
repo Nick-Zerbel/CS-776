@@ -39,13 +39,15 @@ void hillclimber::evaluate(){
 
 void hillclimber::mutate(){
     int p1;
+	double r;
 
 	for(int i = 0; i < 30; i++){
 		p1 = rand() % 5;
-		if(vec[p1+(i*5)] == 0){
+		r = (double)rand()/RAND_MAX;
+		if(vec[p1+(i*5)] == 0 && r >= 0.5){
 			vec[p1+(i*5)] = 1;
 		}
-		if(vec[p1+(i*5)] == 1){
+		if(vec[p1+(i*5)] == 1 && r >= 0.5){
 			vec[p1+(i*5)] = 0;
 		}
 	}
