@@ -2,7 +2,7 @@
 //  eval.hpp
 //  HW3
 //
-//  Created by Nick Zerbel on 9/21/17.
+//  Created by Nicholas Zerbel on 9/21/17.
 //  Copyright © 2017 Nicholas Zerbel. All rights reserved.
 //
 

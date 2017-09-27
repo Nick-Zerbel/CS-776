@@ -2,7 +2,7 @@
 //  ga.cpp
 //  HW3
 //
-//  Created by Nick Zerbel on 9/21/17.
+//  Created by Nicholas Zerbel on 9/21/17.
 //  Copyright © 2017 Nicholas Zerbel. All rights reserved.
 //
 
@@ -11,7 +11,7 @@
 void ga::create_pop(int a, int p){ //a = array suze and p = pop size
     array_size = a; pop_size = p;
     
-    sol s; int val;
+    individual s; int val;
     for(int i = 0; i < pop_size; i++){
         population.push_back(s);
         new_pop.push_back(s);
@@ -27,20 +27,16 @@ void ga::create_pop(int a, int p){ //a = array suze and p = pop size
             new_pop.at(i).array.push_back(val);
         }
     }
-    
 }
 
 void ga::calculate_prob(){
-    
     f_total = 0;
     for(int i = 0; i < pop_size; i++){ //Find total sum fitness of all individuals
         f_total += fit_vec.at(i);
     }
-    
     for(int i = 0; i < pop_size; i++){ //Record probabilities of each individual being selected
         p_indv.at(i) = fit_vec.at(i)/f_total;
     }
-    
     for(int i = 0; i < pop_size; i++){ //Create pie chart
         if(i == 0){
             p_range.at(i) = p_indv.at(i);
@@ -59,7 +55,8 @@ void ga::crossover(){
         select_parents();
         r = (double)rand()/RAND_MAX;
         if(r <= p_cross){
-            p = rand() % array_size; //crossover point
+            p = rand() % array_size-1; //crossover point
+            p += 1; //This makes sure the crossover point isn't 0
             for(int j = 0; j < p; j++){
                 new_pop.at(2*i).array.at(j) = population.at(parent1).array.at(j);
                 new_pop.at(2*i+1).array.at(j) = population.at(parent2).array.at(j);
@@ -68,14 +65,12 @@ void ga::crossover(){
                 new_pop.at(2*i).array.at(j) = population.at(parent2).array.at(j);
                 new_pop.at(2*i+1).array.at(j) = population.at(parent1).array.at(j);
             }
-            
         }
         if(r > p_cross){
             new_pop.at(2*i) = population.at(parent1);
             new_pop.at(2*i + 1) = population.at(parent2);
         }
     }
-    
     population = new_pop;
 }
 
@@ -113,7 +108,6 @@ void ga::select_parents(){
 
 void ga::mutate(){
     double r; int p;
-    
     for(int i = 0; i < pop_size; i++){
         r = (double)rand()/RAND_MAX;
         if(r <= p_mut){

@@ -2,7 +2,7 @@
 //  eval.cpp
 //  HW3
 //
-//  Created by Nick Zerbel on 9/21/17.
+//  Created by Nicholas Zerbel on 9/21/17.
 //  Copyright © 2017 Nicholas Zerbel. All rights reserved.
 //
 
@@ -20,7 +20,7 @@ void eval::decode(vector<int> vec, int s){
     }
 }
 
-double eval::function1(vector <int> vec){ //f(x) = sum(x^2) from [1,3] for -5.12 <= x <= 5.12
+double eval::function1(vector <int> vec){ //f(x) = sum(x^2) [1,3] for -5.12 <= x <= 5.12
     double x;
     
     fit = 0;
@@ -47,7 +47,7 @@ double eval::function2(vector<int> vec){ //f(x) = 100*(x1^2-x2)^2 + (1-x1)^2
     return fit;
 }
 
-double eval::function3(vector<int> vec){
+double eval::function3(vector<int> vec){ //f(x) = sum(integer(x)) [1,5]
     double x; int xi;
     
     fit = 0;
@@ -63,7 +63,7 @@ double eval::function3(vector<int> vec){
     return fit;
 }
 
-double eval::function4(vector<int> vec){
+double eval::function4(vector<int> vec){ //f(x) = sum(i*x^4) [1,30] + gauss(0,1)
     double x;
     
     fit = 0;
@@ -76,6 +76,7 @@ double eval::function4(vector<int> vec){
     return fit;
 }
 
+//Box-Muller Transform
 double eval::gauss(int mu, int sigma){ //mu = mean and sigma = standard deviation
     double y1, y2, x1, x2;
     

@@ -1,0 +1,13 @@
+Script started on Wed Sep 27 11:14:10 2017
+[?1034hbash-3.2$ ./HW3
+Function: 1
+bash-3.2$ ./HW3
+Function: 2
+bash-3.2$ ./HW3
+Function: 3
+bash-3.2$ ./HW3
+Function: 4
+bash-3.2$ exit
+exit
+
+Script done on Wed Sep 27 11:18:29 2017
