@@ -34,11 +34,17 @@ public:
     void check_for_duplicates(int n, int pos);
     void avg_fitness();
     void sort();
-    void down_select();
+    void evaluate_rank();
+    int select_parent();
+    void crossover();
+    void find_repeats();
+    int change_city(int p);
     void mutate();
     
     
     double p_mut; //Probability of mutation
+    double p_cross; //Probability of crossover
+    double SP; //Selective Pressure
     int pop_size; //Number of policies in population
     int n_cities; //Number of cities in a policy
     bool valid;

@@ -25,9 +25,9 @@ void domain::create_city_vec(string f){
         data >> city_vec.at(i).cx;
         data >> city_vec.at(i).cy;
     }
-    for(int i = 0; i < n_cities; i++){
-        cout << city_vec.at(i).cn << "   " << city_vec.at(i).cx << "   " << city_vec.at(i).cy << endl;
-    }
+    //for(int i = 0; i < n_cities; i++){
+        //cout << city_vec.at(i).cn << "   " << city_vec.at(i).cx << "   " << city_vec.at(i).cy << endl;
+    //}
     
 }
 
