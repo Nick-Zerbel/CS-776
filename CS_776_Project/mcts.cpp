@@ -236,7 +236,7 @@ void monte_carlo::reset_coordinates(){
 
 //SIMULATION------------------------------------------------------------------------------------------------------------------
 void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
-    int act; double steps, dist, q_val; steps = 0; q_val = 0;
+    int act; double dist, q_val; q_val = 0;
     double x, y;
     x = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).x;
     y = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).y;
@@ -245,46 +245,35 @@ void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
         act = rand() % 5;
         if(act == 0){
             x--;
-            steps++;
             check_boundaries(x, y);
             dist = abs(x-ax) + abs(y-ay);
             if(action_check == false || dist > obs_dist){
                 x++;
-                steps--;
             }
         }
         if(act == 1){
             y++;
-            steps++;
             check_boundaries(x, y);
             dist = abs(x-ax) + abs(y-ay);
             if(action_check == false || dist > obs_dist){
                 y--;
-                steps--;
             }
         }
         if(act == 2){
             y--;
-            steps++;
             check_boundaries(x, y);
             dist = abs(x-ax) + abs(y-ay);
             if(action_check == false || dist > obs_dist){
                 y++;
-                steps--;
             }
         }
         if(act == 3){
             x++;
-            steps++;
             check_boundaries(x, y);
             dist = abs(x-ax) + abs(y-ay);
             if(action_check == false || dist > obs_dist){
                 x--;
-                steps--;
             }
-        }
-        if(act == 4){
-            steps++;
         }
         
         for(int j = 0; j < map->n_agents; j++){

@@ -20,7 +20,7 @@
 
 using namespace std;
 
-void record_parameters(ea *eap){ //stat-runs, max_runs, increment, starting agents, max agents
+void record_parameters(ea *eap){
     ofstream par; par.open("best_parameters.txt");
     par << eap->pop.at(0).goal_r << endl;
     par << eap->pop.at(0).p << endl;
@@ -39,9 +39,7 @@ void create_coordinate_file(gridworld *gp, multi_agent *map, int ma){
 }
 
 void run_mcts(gridworld *gp, multi_agent *map, monte_carlo *mcp, multi_tree *tp, int sruns, int ai, int amax, int rmax, int incr){
-    ofstream data_d;
-    data_d.open("difference_its.txt");
-    
+    int group; group = 0;
     for(gp->n_agents = ai; gp->n_agents <= amax;){
         for(int s = 0; s < sruns; s++){
             gp->initialize_parameters(map, mcp);
@@ -70,13 +68,12 @@ void run_mcts(gridworld *gp, multi_agent *map, monte_carlo *mcp, multi_tree *tp,
                 }
             }
             //Record Information
-            data_d << gp->learn_its << "\t";
+            gp->episodes.at(group*sruns + s) = gp->learn_its;
             gp->clear_all_vectors(map, mcp, tp);
         }
+        group++;
         gp->n_agents += incr;
-        data_d << endl;
     }
-    data_d.close();
 }
 
 int main() {
@@ -87,37 +84,41 @@ int main() {
     
     //Static Parameters
     bool create_file = false; //If true, a new txt file is created with agent and goal starting coordinates
-    gp->x_dim = 10; //Maximum X Dimension
-    gp->y_dim = 10; //Maximum Y Dimension
-    int agent_increment = 1; //Increases the number of agents in a simulation by this amount
-    int starting_agents = 2; //Initial number of agents being tested
-    int max_agents = 5; //Maximum number of agents to be tested
+    gp->x_dim = 80; //Maximum X Dimension
+    gp->y_dim = 80; //Maximum Y Dimension
+    int agent_increment = 8; //Increases the number of agents in a simulation by this amount
+    int starting_agents = 8; //Initial number of agents being tested
+    int max_agents = 40; //Maximum number of agents to be tested
     int n_groups = ((max_agents - starting_agents)/agent_increment) + 1; //Number of agent groups being tested
     mcp->max_lev = g.x_dim + g.y_dim;
     lp->mci_max = mcp->max_lev;
     int stat_runs = 10; //Number of statistical runs
     int max_run = 1000; //Cuts off the simulation if the number of iterations exceed this amount
-    int max_gen = 100; //Maximum number of generations to evolve
+    int max_gen = 10; //Maximum number of generations to evolve
     eap->pop_size = 10;
-    eap->p_mut = 0.99; //Probability of mutation
+    eap->p_mut = 0.90; //Probability of mutation
     
-    double n_successful;
-    double episode;
-    vector <double> reliability;
-    for(int i = 0; i < n_groups; i++){
-        reliability.push_back(0);
-    }
+    int n_successful; //Number of succsseful runs out of all stat runs
+    int ep;
+    double optimality; //Percentage optimality
+    double learn_eps; //Average number of learning episodes.
+    double reliability; //Percentage reliability
+    double mr = (double)max_run;
     
     if(create_file == true){
         create_coordinate_file(gp, map, max_agents);
     }
     eap->create_pop(lp);
+    for(int i = 0; i < n_groups; i++){
+        for(int j = 0; j < stat_runs; j++){
+            gp->episodes.push_back(0);
+        }
+    }
     
     ofstream fit; //Records best fitness per generation
     fit.open("best_fitness.txt");
     
     for(int i = 0; i < max_gen; i++){
-        cout << "Gen: " << i << endl;
         for(int j = 0; j < eap->pop_size; j++){
             //Testing Parameters
             gp->goal_reward = eap->pop.at(i).goal_r; //Reward for reaching an unclaimed goal
@@ -129,18 +130,21 @@ int main() {
             mcp->obs_dist = eap->pop.at(i).obs_d; //The observable distance
             
             run_mcts(gp, map, mcp, tp, stat_runs, starting_agents, max_agents, max_run, agent_increment);
-            ifstream itdata("difference_its.txt");
-            n_successful = (double)(n_groups * stat_runs); //Total number of runs
+            n_successful = (n_groups * stat_runs); //Total number of runs
+            learn_eps = 0;
             for(int ng = 0; ng < n_groups; ng++){
                 for(int sr = 0; sr < stat_runs; sr++){
-                    itdata >> episode;
-                    if(episode >= max_run){
-                        n_successful--;
+                    ep = gp->episodes.at(ng*stat_runs + sr);
+                    learn_eps += (double)gp->episodes.at(ng*stat_runs + sr);
+                    if(ep >= max_run){
+                        n_successful -= 1;
                     }
                 }
             }
-            eap->fit_vec.at(j) = n_successful/(n_groups * stat_runs); //Number of successful runs out of total runs
-            itdata.close();
+            learn_eps /= (double)(stat_runs*n_groups);
+            optimality = (mr - learn_eps)/mr;
+            reliability = (double)(n_successful/(n_groups * stat_runs));
+            eap->fit_vec.at(j) = reliability*100 + optimality*100;
         }
         eap->re_order();
         fit << eap->fit_vec.at(0) << "\n";

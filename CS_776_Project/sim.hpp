@@ -34,6 +34,7 @@ public:
     vector <int> dif_nodes; //Keeps track of which node agents ended on during global eval;
     vector <double> dif_rewards; //Tacks the difference reward for each agent
     vector <bool> ag_sim;
+    vector <int> episodes;
     void reset_all_agents(multi_agent *map, multi_tree *tp);
     void find_current_node(multi_agent *map, monte_carlo *mcp, multi_tree *tp, int agn, int l);
     void calculate_global(multi_agent *map, monte_carlo *mcp, multi_tree *tp, int s);

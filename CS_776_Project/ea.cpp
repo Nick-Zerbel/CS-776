@@ -44,7 +44,7 @@ void ea::re_order(){
 
 void ea::mutation(limits *lp){
     double prob; int par;
-    for(int i = 2; i < pop_size; i++){
+    for(int i = 1; i < pop_size; i++){
         prob = (double)(rand()/RAND_MAX);
         if(prob <= p_mut){
             par = rand() % 7;
