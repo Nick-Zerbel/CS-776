@@ -41,10 +41,11 @@ void multi_agent::create_agent_vec(int n, int xd, int yd){
         check_agent_coordinates(i, x ,y);
         assert(unique_pos == true);
     }
-    
-    ofstream ag; ag.open("Agent_Coordinates.txt");
+    ofstream ag;
+    ag.open("Agent_Coordinates.txt");
     for(int i = 0; i < n_agents; i++){
-        ag << agent_vec.at(i).agent_x << "\t" << agent_vec.at(i).agent_y << endl;
+        ag << agent_vec.at(i).agent_x << "\n";
+        ag << agent_vec.at(i).agent_y << "\n";
     }
     ag.close();
 }
@@ -52,7 +53,7 @@ void multi_agent::create_agent_vec(int n, int xd, int yd){
 void multi_agent::assign_agent_coordinates(int n){
     agent a;
     n_agents = n;
-    ifstream a_coords("agent_coordinates.txt");
+    ifstream a_coords("Agent_Coordinates.txt");
     for(int i = 0; i < n_agents; i++){
         agent_vec.push_back(a);
         a_coords >> agent_vec.at(i).agent_x;
@@ -141,17 +142,18 @@ void multi_agent::create_goal_vec(){
         check_goal_coordinates(i, x, y);
         assert(unique_pos == true);
     }
-    
-    ofstream gs; gs.open("Goal_Coordinates.txt");
+    ofstream gs;
+    gs.open("Goal_Coordinates.txt");
     for(int i = 0; i < n_agents; i++){
-        gs << goal_vec.at(i).goal_x << "\t" << goal_vec.at(i).goal_y << endl;
+        gs << goal_vec.at(i).goal_x << "\n";
+        gs << goal_vec.at(i).goal_y << "\n";
     }
     gs.close();
 }
 
 void multi_agent::assign_goal_coordinates(){
     goal g;
-    ifstream g_coords("goal_coordinates.txt");
+    ifstream g_coords("Goal_Coordinates.txt");
     for(int i = 0; i < n_agents; i++){
         goal_vec.push_back(g);
         g_coords >> goal_vec.at(i).goal_x;

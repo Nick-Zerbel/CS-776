@@ -9,21 +9,20 @@
 #include "ea.hpp"
 
 void ea::create_pop(limits *lp){
-    parameters p;
+    policy p; int r;
     
     for(int i = 0; i < pop_size; i++){
         pop.push_back(p);
         fit_vec.push_back(0);
+        fit_prob.push_back(0);
     }
     for(int i = 0; i < pop_size; i++){
-        pop.at(i).goal_r = (double)((rand() % (lp->gr_max - lp->gr_min)) + lp->gr_min);
-        pop.at(i).p = (double)((rand() % (lp->p_max - lp->p_min)) + lp->p_min);
-        pop.at(i).roll_r = (double)((rand() % (lp->rr_max - lp->rr_min) + lp->rr_min));
-        pop.at(i).eps = (double)((rand() % (lp->eps_max - lp->eps_min)) + lp->eps_min) + (double)(rand()/RAND_MAX);
-        pop.at(i).roll_its = (rand() % (lp->ri_max - lp->ri_min)) + lp->ri_min;
-        pop.at(i).mc_its = (rand() % (lp->mci_max - lp->mci_min)) + lp->mci_min;
-        pop.at(i).obs_d = (double)((rand() % (lp->od_max - lp->od_min)) + lp->od_min);
+        for(int j = 0; j < a_size; j++){
+            r = rand() % 2;
+            pop.at(i).pol.push_back(r);
+        }
     }
+    new_pop = pop;
 }
 
 void ea::re_order(){
@@ -32,8 +31,8 @@ void ea::re_order(){
         p1 = i;
         for(int j = 0; j < pop_size; j++){
             p2 = j;
-            if(i != j){
-                if(fit_vec.at(j) > fit_vec.at(i)){
+            if(i < j){
+                if(fit_vec.at(p2) > fit_vec.at(p1)){
                     iter_swap(fit_vec.begin() + p1, fit_vec.begin() + p2);
                     iter_swap(pop.begin() + p1, pop.begin() + p2);
                 }
@@ -42,32 +41,88 @@ void ea::re_order(){
     }
 }
 
-void ea::mutation(limits *lp){
-    double prob; int par;
-    for(int i = 1; i < pop_size; i++){
+void ea::decode(int s, int ssize, int pos){
+    num = 0;
+    for(int i = 0; i < ssize; i++){
+        num += pop.at(pos).pol.at(i + s*ssize)*pow(2,i);
+    }
+}
+
+void ea::calc_fit_prob(){
+    fit_sum = 0;
+    for(int i = 0; i < pop_size; i++){
+        fit_sum += fit_vec.at(i);
+    }
+    for(int i = 0; i < pop_size; i++){
+        if(i == 0){
+            fit_prob.at(i) = fit_vec.at(i)/fit_sum;
+        }
+        if(i > 0){
+            fit_prob.at(i) = fit_prob.at(i-1) + (fit_vec.at(i)/fit_sum);
+        }
+    }
+}
+
+int ea::select_parent(){
+    double r; int p;
+    r = (double)(rand()/RAND_MAX);
+    for(int i = 0; i < pop_size; i++){
+        if(i == 0){
+            if(0 <= r && r < fit_prob.at(i)){
+                p = i;
+                break;
+            }
+        }
+        if(i > 0){
+            if(fit_prob.at(i-1) <= r && r < fit_prob.at(i)){
+                p = i;
+                break;
+            }
+        }
+    }
+    
+    return p;
+}
+
+void ea::crossover(){
+    double prob; int p1, p2, cp;
+    new_pop.at(0) = pop.at(0);
+    new_pop.at(1) = pop.at(0);
+    for(int i = 2; i < ((pop_size-2)/2); i++){
+        prob = (double)(rand()/RAND_MAX);
+        p1 = select_parent(); //Parent 1
+        p2 = select_parent(); //Parent 2
+        if(prob <= p_cross){
+            cp = (rand() % (a_size-2)) + 1; //Crossover Point
+            for(int j = 0; j < cp; j++){
+                new_pop.at(2*i).pol.at(j) = pop.at(p1).pol.at(j);
+                new_pop.at(2*i+1).pol.at(j) = pop.at(p2).pol.at(j);
+            }
+            for(int j = cp; j < a_size; j++){
+                new_pop.at(2*i).pol.at(j) = pop.at(p2).pol.at(j);
+                new_pop.at(2*i+1).pol.at(j) = pop.at(p1).pol.at(j);
+            }
+        }
+        if(prob > p_cross){
+            new_pop.at(2*i) = pop.at(p1);
+            new_pop.at(2*i+1) = pop.at(p2);
+        }
+    }
+    pop = new_pop;
+    assert(pop.size() == pop_size);
+}
+
+void ea::mutation(){
+    double prob; int b;
+    for(int i = 2; i < pop_size; i++){
         prob = (double)(rand()/RAND_MAX);
         if(prob <= p_mut){
-            par = rand() % 7;
-            if(par == 0){
-                pop.at(i).goal_r = (double)((rand() % (lp->gr_max - lp->gr_min)) + lp->gr_min);
+            b = rand() % a_size;
+            if(pop.at(i).pol.at(b) == 0){
+                pop.at(i).pol.at(b) = 1;
             }
-            if(par == 1){
-                pop.at(i).p = (double)((rand() % (lp->p_max - lp->p_min)) + lp->p_min);
-            }
-            if(par == 2){
-                pop.at(i).roll_r = (double)((rand() % (lp->rr_max - lp->rr_min) + lp->rr_min));
-            }
-            if(par == 3){
-                pop.at(i).eps = (double)((rand() % (lp->eps_max - lp->eps_min)) + lp->eps_min) + (double)(rand()/RAND_MAX);
-            }
-            if(par == 4){
-                pop.at(i).roll_its = (rand() % (lp->ri_max - lp->ri_min)) + lp->ri_min;
-            }
-            if(par == 5){
-                pop.at(i).mc_its = (rand() % (lp->mci_max - lp->mci_min)) + lp->mci_min;
-            }
-            if(par == 6){
-                pop.at(i).obs_d = (double)((rand() % (lp->od_max - lp->od_min)) + lp->od_min);
+            if(pop.at(i).pol.at(b) == 1){
+                pop.at(i).pol.at(b) = 0;
             }
         }
     }

@@ -12,54 +12,46 @@
 #include <cstdlib>
 #include <vector>
 #include <iostream>
-
+#include <cmath>
+#include <assert.h>
 
 using namespace std;
 
-class parameters{
+class policy{
 public:
-    double goal_r; //Goal Reward
-    double p; //Penalty
-    double roll_r; //Rollout Reward
-    double eps; //Epsilon
-    int roll_its; //Rollout Iterations
-    int mc_its; //Monte Carlo Iterations
-    double obs_d; //Observational Distance
+    vector <int> pol;
 };
 
 class limits{
 public:
-    int gr_max = 1000;
-    int gr_min = 100;
-    int p_max = 100;
-    int p_min = 0;
-    int rr_max = 100;
-    int rr_min = 1;
-    int eps_max = 5;
-    int eps_min = 0;
-    int ri_max = 5000;
-    int ri_min = 100;
-    int mci_max;
-    int mci_min = 5;
-    int od_max = 100;
-    int od_min = 5;
+    double up_lim = 1000;
+    double low_lim = 1;
 };
 
 class ea{
     friend class parameters;
 public:
-    vector <parameters> pop;
-    vector <parameters> new_pop;
+    vector <policy> pop;
+    vector <policy> new_pop;
     vector <double> fit_vec;
+    vector <double> fit_prob;
     
     void create_pop(limits *lp);
     void select_parents();
     void re_order();
-    void mutation(limits *lp);
+    void decode(int s, int ssize, int pos);
+    void calc_fit_prob();
+    void mutation();
+    void crossover();
+    int select_parent();
     
     double fit;
     double p_mut; //Probability of Mutation
+    double p_cross; //Probability of Crossover
+    double num;
+    double fit_sum;
     int pop_size;
+    int a_size = 80; //Size of binary array
 };
 
 #endif /* ea_hpp */

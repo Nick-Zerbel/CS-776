@@ -17,6 +17,8 @@ void gridworld::initialize_parameters(multi_agent *map, monte_carlo *mcp){
         dif_rewards.push_back(0);
         dif_nodes.push_back(0);
     }
+    map->agent_vec.clear();
+    map->goal_vec.clear();
     map->assign_agent_coordinates(n_agents);
     map->assign_goal_coordinates();
     mcp->node_number = 0;
@@ -205,29 +207,4 @@ void gridworld::clear_all_vectors(multi_agent *map, monte_carlo *mcp, multi_tree
     ag_sim.clear();
     dif_nodes.clear();
     dif_rewards.clear();
-}
-
-void gridworld::print_tree(multi_tree *tp){
-    ofstream mc;
-    mc.open("monte_carlo_trees.txt");
-    for(int na = 0; na < n_agents; na++){ //For all Agents
-        mc << endl;
-        mc << "Tree For Agent: " << na << "-------------------------------------------------------" << "\n";
-        mc << endl;
-        
-        for(int ii = 0; ii < tp->ag_tree.at(na).tree_vec.size(); ii++){ //For the entire tree
-            mc << "Level: " << ii << endl;
-            for(int jj = 0; jj < tp->ag_tree.at(na).tree_vec.at(ii).level_vec.size(); jj++){
-                mc << tp->ag_tree.at(na).tree_vec.at(ii).level_vec.at(jj).x << "\t";
-                mc << tp->ag_tree.at(na).tree_vec.at(ii).level_vec.at(jj).y << "\t";
-                mc << tp->ag_tree.at(na).tree_vec.at(ii).level_vec.at(jj).n_number << "\t";
-                mc << tp->ag_tree.at(na).tree_vec.at(ii).level_vec.at(jj).p_number << "\t";
-                mc << tp->ag_tree.at(na).tree_vec.at(ii).level_vec.at(jj).UCB1 << "\t";
-                mc << tp->ag_tree.at(na).tree_vec.at(ii).level_vec.at(jj).q_node << "\n";
-            }
-            mc << endl;
-        }
-        
-    }
-    mc.close();
 }

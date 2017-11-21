@@ -27,7 +27,6 @@ public:
     void initialize_parameters(multi_agent *map, monte_carlo *mcp);
     void cred_evals(multi_agent *map, multi_tree* tp, monte_carlo *mcp);
     void check_goal_conditions(multi_agent *map); //Check if all agents have made it to a goal
-    void print_tree(multi_tree *tp);
     
     //Credit Evaluation
     vector <int> node_vec; //Keeps track of current nodes during credit evaluations

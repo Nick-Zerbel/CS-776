@@ -236,41 +236,57 @@ void monte_carlo::reset_coordinates(){
 
 //SIMULATION------------------------------------------------------------------------------------------------------------------
 void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
-    int act; double dist, q_val; q_val = 0;
-    double x, y;
+    double r, prob_sum; double dist, q_val; q_val = 0;
+    double x, y, xi, yi;
     x = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).x;
     y = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).y;
+    xi = x;
+    yi = y;
+    
+    //Calculate Probability Distribution
+    prob_sum = 0;
+    for(int i = 0; i < 5; i++){
+        prob_sum += roll_probs.at(i);
+    }
+    for(int i = 0; i < 5; i++){
+        if(i == 0){
+            roll_probs.at(i) /= prob_sum;
+        }
+        if(i > 0){
+            roll_probs.at(i) = roll_probs.at(i-1) + (roll_probs.at(i)/prob_sum);
+        }
+    }
     
     for(int i = 0; i < rollout_its; i++){
-        act = rand() % 5;
-        if(act == 0){
+        r = (double)(rand()/RAND_MAX);
+        if(0 <= r && r < roll_probs.at(0)){
             x--;
             check_boundaries(x, y);
-            dist = abs(x-ax) + abs(y-ay);
+            dist = abs(x-xi) + abs(y-yi);
             if(action_check == false || dist > obs_dist){
                 x++;
             }
         }
-        if(act == 1){
+        if(roll_probs.at(0) <= r && r < roll_probs.at(1)){
             y++;
             check_boundaries(x, y);
-            dist = abs(x-ax) + abs(y-ay);
+            dist = abs(x-xi) + abs(y-yi);
             if(action_check == false || dist > obs_dist){
                 y--;
             }
         }
-        if(act == 2){
+        if(roll_probs.at(1) <= r && r < roll_probs.at(2)){
             y--;
             check_boundaries(x, y);
-            dist = abs(x-ax) + abs(y-ay);
+            dist = abs(x-xi) + abs(y-yi);
             if(action_check == false || dist > obs_dist){
                 y++;
             }
         }
-        if(act == 3){
+        if(roll_probs.at(2) <= r && r < roll_probs.at(3)){
             x++;
             check_boundaries(x, y);
-            dist = abs(x-ax) + abs(y-ay);
+            dist = abs(x-xi) + abs(y-yi);
             if(action_check == false || dist > obs_dist){
                 x--;
             }

@@ -57,6 +57,7 @@ public:
     //Parameters
     vector <double> reward_vec;
     vector <int> n_num_vec;
+    vector <double> roll_probs;
     bool action_check; //Flags possible actions as valid or invalid
     int node_chosen;
     double parent_visit;
