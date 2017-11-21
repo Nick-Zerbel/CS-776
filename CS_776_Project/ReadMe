@@ -1,0 +1,1 @@
+g++ -std=c++11 -o test10 main.cpp agent.cpp agent.hpp tree.cpp tree.hpp mcts.cpp mcts.hpp sim.cpp sim.hpp ea.cpp ea.hpp
