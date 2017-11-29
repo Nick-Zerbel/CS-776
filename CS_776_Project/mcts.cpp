@@ -49,17 +49,25 @@ int monte_carlo::select_move(multi_tree *tp, int agn, int l){ //(agent number, l
         }
     }
     
+    if(action_check == false){
+        current_node = parent_number;
+        goto skip;
+    }
+    
     best = *max_element(reward_vec.begin(), reward_vec.end());
     reward_vec.clear();
     
     for(int i = 0; i < tp->ag_tree.at(agn).tree_vec.at(l).level_vec.size(); i++){
-        if(parent_number == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).p_number && best == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).UCB1){
-            action = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).action;
-            current_node = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).n_number; //Selected node becomes the new parent node for the next round
-            break;
+        if(parent_number == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).p_number){
+            if(best == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).UCB1){
+                action = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).action;
+                current_node = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).n_number; //Selected node
+                break;
+            }
         }
     }
     
+skip:
     assert(action >= 0);
     assert(action <= 4);
     return action;
@@ -171,10 +179,10 @@ void monte_carlo::no_move(multi_tree *tp){
     reset_coordinates();
     check_boundaries(ax, ay);
     if(lev > max_lev){
-        action_check = false;
+        //action_check = false;
     }
     if(action_check == true){
-        prune(tp, lev-5);
+        prune(tp, lev-8);
     }
     if(action_check == true){
         update_node_numbers(tp);
@@ -185,7 +193,7 @@ void monte_carlo::no_move(multi_tree *tp){
 void monte_carlo::pruning(multi_tree *tp){
     check_boundaries(ax, ay); //Agent cannot go out of bounds
     if(lev > max_lev){
-        action_check = false;
+        //action_check = false;
     }
     if(action_check == true){
         prune(tp, lev); //Agent cannot revisit a previous state during a MCTS simulation
@@ -234,60 +242,42 @@ void monte_carlo::reset_coordinates(){
     ay = previous_y;
 }
 
-//SIMULATION------------------------------------------------------------------------------------------------------------------
+//SIMULATION-----------------------------------------------------------------------------------------------------------------
+
 void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
-    double r, prob_sum; double dist, q_val; q_val = 0;
+    double q_val; q_val = 0; int act;
     double x, y, xi, yi;
     x = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).x;
     y = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).y;
-    xi = x;
-    yi = y;
-    
-    //Calculate Probability Distribution
-    prob_sum = 0;
-    for(int i = 0; i < 5; i++){
-        prob_sum += roll_probs.at(i);
-    }
-    for(int i = 0; i < 5; i++){
-        if(i == 0){
-            roll_probs.at(i) /= prob_sum;
-        }
-        if(i > 0){
-            roll_probs.at(i) = roll_probs.at(i-1) + (roll_probs.at(i)/prob_sum);
-        }
-    }
+    xi = x; yi = y;
     
     for(int i = 0; i < rollout_its; i++){
-        r = (double)(rand()/RAND_MAX);
-        if(0 <= r && r < roll_probs.at(0)){
+        act = rollout_policy.at(i);
+        if(act == 0){
             x--;
             check_boundaries(x, y);
-            dist = abs(x-xi) + abs(y-yi);
-            if(action_check == false || dist > obs_dist){
+            if(action_check == false){
                 x++;
             }
         }
-        if(roll_probs.at(0) <= r && r < roll_probs.at(1)){
+        if(act == 1){
             y++;
             check_boundaries(x, y);
-            dist = abs(x-xi) + abs(y-yi);
-            if(action_check == false || dist > obs_dist){
+            if(action_check == false){
                 y--;
             }
         }
-        if(roll_probs.at(1) <= r && r < roll_probs.at(2)){
+        if(act == 2){
             y--;
             check_boundaries(x, y);
-            dist = abs(x-xi) + abs(y-yi);
-            if(action_check == false || dist > obs_dist){
+            if(action_check == false){
                 y++;
             }
         }
-        if(roll_probs.at(2) <= r && r < roll_probs.at(3)){
+        if(act == 3){
             x++;
             check_boundaries(x, y);
-            dist = abs(x-xi) + abs(y-yi);
-            if(action_check == false || dist > obs_dist){
+            if(action_check == false){
                 x--;
             }
         }
@@ -295,15 +285,13 @@ void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
         for(int j = 0; j < map->n_agents; j++){
             if(x == map->goal_vec.at(j).goal_x && y == map->goal_vec.at(j).goal_y){ //If a goal is reached, +100
                 q_val += rollout_reward;
-                x = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).x;
-                y = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).y;
             }
         }
     }
     tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).q_node = q_val;
 }
 
-//BACK-PROPAGATION------------------------------------------------------------------------------------------------------------
+//BACK-PROPAGATION-----------------------------------------------------------------------------------------------------------
 void monte_carlo::back_propagate(multi_tree *tp){
     double n; n = 0;
     double q_val, q_prev, nv; q_val = 0;
@@ -357,18 +345,16 @@ void monte_carlo::back_propagate_evals(multi_agent *map, multi_tree *tp, double 
     
     count = 0;
     for(int i = 0; i < tp->ag_tree.at(agn).tree_vec.at(l).level_vec.size(); i++){ //Update current node value
-        if(parent_number == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).p_number){
-            if(nn == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).n_number){
-                q_val = reward;
-                q_prev = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).q_node;
-                nv = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).visit_count;
-                tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).q_node = q_prev + ((q_val-q_prev)/nv);
-                count++;
-                break;
-            }
+        if(nn == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).n_number){
+            q_val = reward;
+            q_prev = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).q_node;
+            nv = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).visit_count;
+            tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).q_node = q_prev + ((q_val-q_prev)/nv);
+            parent_number = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).p_number;
+            count++;
+            break;
         }
     }
-    
     assert(count > 0);
 
     count = 0;
@@ -385,7 +371,6 @@ void monte_carlo::back_propagate_evals(multi_agent *map, multi_tree *tp, double 
     for(int i = l-1; i >= 0; i--){ //i = level
         for(int j = 0; j < tp->ag_tree.at(agn).tree_vec.at(i).level_vec.size(); j++){ //j = node
             if(parent_number == tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).n_number){
-                //Calculate MC Q-Value
                 q_prev = tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).q_node; //Previous q value
                 nv = tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).visit_count; //Number of visits to this node
                 tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).q_node = q_prev + ((q_val - q_prev)/nv); //MCTS Q-value

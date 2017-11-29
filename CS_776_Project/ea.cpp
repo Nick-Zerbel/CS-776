@@ -8,7 +8,7 @@
 
 #include "ea.hpp"
 
-void ea::create_pop(limits *lp){
+void ea::create_pop(){
     policy p; int r;
     
     for(int i = 0; i < pop_size; i++){
@@ -18,7 +18,7 @@ void ea::create_pop(limits *lp){
     }
     for(int i = 0; i < pop_size; i++){
         for(int j = 0; j < a_size; j++){
-            r = rand() % 2;
+            r = rand() % 5;
             pop.at(i).pol.push_back(r);
         }
     }
@@ -26,46 +26,49 @@ void ea::create_pop(limits *lp){
 }
 
 void ea::re_order(){
-    int p1, p2;
     for(int i = 0; i < pop_size; i++){
-        p1 = i;
         for(int j = 0; j < pop_size; j++){
-            p2 = j;
             if(i < j){
-                if(fit_vec.at(p2) > fit_vec.at(p1)){
-                    iter_swap(fit_vec.begin() + p1, fit_vec.begin() + p2);
-                    iter_swap(pop.begin() + p1, pop.begin() + p2);
+                if(fit_vec.at(j) > fit_vec.at(i)){
+                    iter_swap(fit_vec.begin() + i, fit_vec.begin() + j);
+                    iter_swap(pop.begin() + i, pop.begin() + j);
                 }
             }
         }
     }
 }
 
-void ea::decode(int s, int ssize, int pos){
-    num = 0;
-    for(int i = 0; i < ssize; i++){
-        num += pop.at(pos).pol.at(i + s*ssize)*pow(2,i);
-    }
-}
-
 void ea::calc_fit_prob(){
-    fit_sum = 0;
+    fit_sum = 0; double p = (double)pop_size;
     for(int i = 0; i < pop_size; i++){
         fit_sum += fit_vec.at(i);
+        fit_prob.at(i) = 0;
     }
-    for(int i = 0; i < pop_size; i++){
-        if(i == 0){
-            fit_prob.at(i) = fit_vec.at(i)/fit_sum;
+    if(fit_sum > 0){
+        for(int i = 0; i < pop_size; i++){
+            if(i == 0){
+                fit_prob.at(i) = fit_vec.at(i)/fit_sum;
+            }
+            if(i > 0){
+                fit_prob.at(i) = fit_prob.at(i-1) + (fit_vec.at(i)/fit_sum);
+            }
         }
-        if(i > 0){
-            fit_prob.at(i) = fit_prob.at(i-1) + (fit_vec.at(i)/fit_sum);
+    }
+    if(fit_sum == 0){
+        for(int i = 0; i < pop_size; i++){
+            if(i == 0){
+                fit_prob.at(i) = 1/p;
+            }
+            if(i > 0){
+                fit_prob.at(i) = fit_prob.at(i-1) + (1/p);
+            }
         }
     }
 }
 
 int ea::select_parent(){
     double r; int p;
-    r = (double)(rand()/RAND_MAX);
+    r = (double)(rand())/RAND_MAX;
     for(int i = 0; i < pop_size; i++){
         if(i == 0){
             if(0 <= r && r < fit_prob.at(i)){
@@ -80,16 +83,16 @@ int ea::select_parent(){
             }
         }
     }
-    
+    assert(0 <= p && p < pop_size);
     return p;
 }
 
 void ea::crossover(){
     double prob; int p1, p2, cp;
     new_pop.at(0) = pop.at(0);
-    new_pop.at(1) = pop.at(0);
-    for(int i = 2; i < ((pop_size-2)/2); i++){
-        prob = (double)(rand()/RAND_MAX);
+    new_pop.at(1) = pop.at(1);
+    for(int i = 1; i < (pop_size/2); i++){
+        prob = (double)(rand())/RAND_MAX;
         p1 = select_parent(); //Parent 1
         p2 = select_parent(); //Parent 2
         if(prob <= p_cross){
@@ -113,17 +116,20 @@ void ea::crossover(){
 }
 
 void ea::mutation(){
-    double prob; int b;
+    double prob; int b, a;
     for(int i = 2; i < pop_size; i++){
-        prob = (double)(rand()/RAND_MAX);
+        prob = (double)(rand())/RAND_MAX;
         if(prob <= p_mut){
             b = rand() % a_size;
-            if(pop.at(i).pol.at(b) == 0){
-                pop.at(i).pol.at(b) = 1;
-            }
-            if(pop.at(i).pol.at(b) == 1){
-                pop.at(i).pol.at(b) = 0;
-            }
+            a = rand() % 5;
+            pop.at(i).pol.at(b) = a;
         }
     }
+}
+
+void ea::clear_vecs(){
+    pop.clear();
+    new_pop.clear();
+    fit_vec.clear();
+    fit_prob.clear();
 }

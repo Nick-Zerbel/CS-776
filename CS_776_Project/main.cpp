@@ -20,6 +20,14 @@
 
 using namespace std;
 
+void clear_txt_files(){
+    ofstream best, ag, gg;
+    best.open("best_policy.txt", ios::out | ios::trunc);
+    ag.open("Agent_Coordinates.txt", ios::out | ios::trunc);
+    gg.open("Goal_Coordinates.txt", ios::out | ios::trunc);
+    best.close(); ag.close(); gg.close();
+}
+
 void record_best_policy(ea *eap){
     ofstream best; best.open("best_policy.txt", ios::app);
     for(int i = 0; i < eap->a_size; i++){
@@ -70,108 +78,88 @@ void run_mcts(gridworld *gp, multi_agent *map, monte_carlo *mcp, multi_tree *tp,
 int main() {
     srand( time(NULL) );
     
-    gridworld g; monte_carlo mcts; multi_tree t; multi_agent m; ea e; limits l;
-    gridworld *gp = &g; monte_carlo *mcp = &mcts; multi_tree *tp = &t; multi_agent *map = &m; ea *eap = &e; limits *lp = &l;
+    gridworld g; monte_carlo mcts; multi_tree t; multi_agent m; ea e;
+    gridworld *gp = &g; monte_carlo *mcp = &mcts; multi_tree *tp = &t; multi_agent *map = &m; ea *eap = &e;
     
     //MCTS Parameters
-    gp->x_dim = 10; //Maximum X Dimension
-    gp->y_dim = 10; //Maximum Y Dimension
-    int agent_increment = 5; //Increases the number of agents in a simulation by this amount
-    int starting_agents = 5; //Initial number of agents being tested
-    int max_agents = 25; //Maximum number of agents to be tested
+    gp->x_dim = 4; //Maximum X Dimension
+    gp->y_dim = 4; //Maximum Y Dimension
+    int agent_increment = 1; //Increases the number of agents in a simulation by this amount
+    int starting_agents = 2; //Initial number of agents being tested
+    int max_agents = 4; //Maximum number of agents to be tested
     int n_groups = ((max_agents - starting_agents)/agent_increment) + 1; //Number of agent groups being tested
     mcp->max_lev = g.x_dim + g.y_dim;
     int stat_runs = 1; //Number of statistical runs for MCTS
-    int max_run = 1000; //Cuts off the simulation if the number of iterations exceed this amount
-    mcp->epsilon = 1; //UCB1 exploration constant (0 = greedy action selection)
-    mcp->rollout_its = 100; //Number of rollout moves
-    mcp->mc_iterations = 5; //Number of iterations of MCTS each agent performs
-    mcp->obs_dist = 1000; //The observable distance
+    int max_run = 300; //Cuts off the simulation if the number of iterations exceed this amount
+    mcp->epsilon = 0; //UCB1 exploration constant (0 = greedy action selection)
+    mcp->rollout_its = 20; //Number of rollout moves
+    mcp->mc_iterations = 3; //Number of iterations of MCTS each agent performs
+    gp->goal_reward = 10;
+    mcp->rollout_reward = 1;
+    gp->penalty = 1;
     
     //EA Parameters
-    int ea_s_runs = 30; //Number of stat runs for the EA
+    int ea_s_runs = 10; //Number of stat runs for the EA
     int max_gen = 100; //Maximum number of generations to evolve
     eap->pop_size = 10; //Population size (must be even)
-    eap->p_cross = 0.5; //Probability of Crossover
+    eap->p_cross = 0.7; //Probability of Crossover
     eap->p_mut = 0.2; //Probability of mutation
+    eap->a_size = mcp->rollout_its;
     
     //Fitness Data
     double n_successful; //Number of succsseful runs out of all stat runs
-    int ep;
     double optimality; //Percentage optimality
     double learn_eps; //Average number of learning episodes.
     double reliability; //Percentage reliability
     double mr = (double)max_run;
     double total_runs = (double)n_groups;
     
-    ofstream max_fit; ofstream avg_fit; ofstream min_fit;
+    clear_txt_files();
+    
+    ofstream max_fit, avg_fit, min_fit;
     max_fit.open("max_fitness.txt"); avg_fit.open("average_fitness.txt"); min_fit.open("min_fitness.txt");
     
     for(int i = 0; i < n_groups; i++){
         gp->episodes.push_back(0);
     }
-    for(int i = 0; i < 5; i++){
-        mcp->roll_probs.push_back(0);
-    }
     
     for(int srn = 0; srn < ea_s_runs; srn++){ //Stat Runs for EA
-        eap->create_pop(lp);
+        eap->create_pop();
+        cout << "Stat Run: " << srn << endl;
         for(int i = 0; i < max_gen; i++){
+            cout << "Gen: " << i << endl;
+            if(i % 100 == 0){ //Reset Agent Coordinates every X generations
+                map->create_new_sys(max_agents, gp->x_dim, gp->y_dim);
+            }
             for(int j = 0; j < eap->pop_size; j++){
-                eap->decode(0, 10, j);
-                gp->goal_reward = lp->low_lim + eap->num*(abs(lp->up_lim - lp->low_lim)/(pow(2,10)-1));
-                eap->decode(1, 10, j);
-                gp->penalty = lp->low_lim + eap->num*(abs(lp->up_lim - lp->low_lim)/(pow(2,10)-1));
-                eap->decode(2, 10, j);
-                mcp->rollout_reward = lp->low_lim + eap->num*(abs(lp->up_lim - lp->low_lim)/(pow(2,10)-1));
-                for(int p = 0; p < 5; p++){
-                    eap->decode(3+p, 10, j);
-                    mcp->roll_probs.at(p) = lp->low_lim + eap->num*(abs(lp->up_lim - lp->low_lim)/(pow(2,10)-1));
-                }
-                
-                if(i % 10 == 0){ //Reset Agent Coordinates every 5 generations
-                    map->agent_vec.clear();
-                    map->goal_vec.clear();
-                    map->create_agent_vec(max_agents, gp->x_dim, gp->y_dim);
-                    map->create_goal_vec();
-                    map->agent_vec.clear();
-                    map->goal_vec.clear();
-                }
-                
+                mcp->rollout_policy = eap->pop.at(j).pol;
                 run_mcts(gp, map, mcp, tp, stat_runs, starting_agents, max_agents, max_run, agent_increment);
                 
                 //Evaluate Fitness
                 n_successful = total_runs;
                 learn_eps = 0;
                 for(int ng = 0; ng < n_groups; ng++){
-                    ep = gp->episodes.at(ng);
                     learn_eps += (double)gp->episodes.at(ng);
-                    if(ep >= max_run){
+                    if(gp->episodes.at(ng) >= max_run){
                         n_successful -= 1;
                     }
                 }
-                learn_eps /= (double)(n_groups);
+                learn_eps /= total_runs; //Average number of learning episodes needed to find solution
                 optimality = (mr - learn_eps)/mr;
-                reliability = (double)(n_successful/n_groups);
+                reliability = n_successful/total_runs; //Number of successful runs out of total runs
                 eap->fit_vec.at(j) = reliability*100 + optimality*100;
-                assert(eap->fit_vec.at(j) >= 0);
             }
             eap->re_order();
             eap->calc_fit_prob();
-            max_fit << eap->fit_vec.at(0) << "\t";
+            max_fit << *max_element(eap->fit_vec.begin(), eap->fit_vec.end()) << "\t";
             avg_fit << eap->fit_sum/eap->pop_size << "\t";
-            min_fit << eap->fit_vec.at(eap->pop_size-1) << "\t";
+            min_fit << *min_element(eap->fit_vec.begin(), eap->fit_vec.end())<< "\t";
             eap->crossover();
             eap->mutation();
         }
         record_best_policy(eap);
-        max_fit << endl;
-        avg_fit << endl;
-        min_fit << endl;
-        eap->pop.clear();
-        eap->new_pop.clear();
-        eap->fit_vec.clear();
-        eap->fit_prob.clear();
+        max_fit << endl; avg_fit << endl; min_fit << endl;
+        eap->clear_vecs();
     }
     
     max_fit.close(); avg_fit.close(); min_fit.close();

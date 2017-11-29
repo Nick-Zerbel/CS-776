@@ -23,6 +23,8 @@ using namespace std;
 
 class monte_carlo{
 public:
+    vector <int> rollout_policy;
+    
     void set_mc_parameters(multi_tree *tp, int a);
     void create_root_nodes(multi_tree *tp, multi_agent *map);
     void mc_search(multi_tree *tp, multi_agent *map);
@@ -57,7 +59,6 @@ public:
     //Parameters
     vector <double> reward_vec;
     vector <int> n_num_vec;
-    vector <double> roll_probs;
     bool action_check; //Flags possible actions as valid or invalid
     int node_chosen;
     double parent_visit;
@@ -73,7 +74,6 @@ public:
     
     //Experimental Parameters
     int rollout_its; //Number of rollout iterations
-    double obs_dist; //Observable Distance
     double epsilon; //Exploration vs Exploitation parameter for UCB1
     double gamma; //Discount factor for rollout value
     double alpha; //Discount factor for credit eval values

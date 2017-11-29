@@ -15,10 +15,8 @@ void gridworld::initialize_parameters(multi_agent *map, monte_carlo *mcp){
         node_vec.push_back(0);
         ag_sim.push_back(true);
         dif_rewards.push_back(0);
-        dif_nodes.push_back(0);
+        end_lev.push_back(0);
     }
-    map->agent_vec.clear();
-    map->goal_vec.clear();
     map->assign_agent_coordinates(n_agents);
     map->assign_goal_coordinates();
     mcp->node_number = 0;
@@ -52,35 +50,19 @@ void gridworld::check_goal_conditions(multi_agent *map){
 
 //Credit Evaluation Functions ---------------------------------------------------------------------------------------
 void gridworld::cred_evals(multi_agent *map, multi_tree *tp, monte_carlo *mcp){
-    vector <int> tree_sizes; int max_size;
-    for(int i = 0; i < n_agents; i++){
-        tree_sizes.push_back(tp->ag_tree.at(i).tree_vec.size());
-    }
-    max_size = *max_element(tree_sizes.begin(), tree_sizes.end());
-
     reset_all_agents(map, tp);
-    calculate_global(map, mcp, tp, max_size);
+    calculate_global(map, mcp, tp);
     for(int a = 0; a < n_agents; a++){
         reset_all_agents(map, tp);
-        calculate_difference(map, mcp, tp, max_size, a);
+        calculate_difference(map, mcp, tp, a);
     }
+    
     for(int i = 0; i < n_agents; i++){ //Agent
-        for(int j = 0; j < tp->ag_tree.at(i).tree_vec.size(); j++){ //Level of Tree
-            for(int k = 0; k < tp->ag_tree.at(i).tree_vec.at(j).level_vec.size(); k++){ //Node
-                if(dif_nodes.at(i) == tp->ag_tree.at(i).tree_vec.at(j).level_vec.at(k).n_number){ //Final unexpanded node was set to parent node in vector
-                    mcp->parent_number = tp->ag_tree.at(i).tree_vec.at(j).level_vec.at(k).p_number;
-                    mcp->back_propagate_evals(map, tp, dif_rewards.at(i), i, j, dif_nodes.at(i));
-                    goto next;
-                }
-            }
-        }
-    next:
-        max_size = 0;
+        mcp->back_propagate_evals(map, tp, dif_rewards.at(i), i, end_lev.at(i), dif_node_vec.at(i));
     }
-    tree_sizes.clear();
 }
 
-void gridworld::reset_all_agents(multi_agent *map, multi_tree *tp){ //Resets all agents to initial positions
+void gridworld::reset_all_agents(multi_agent *map, multi_tree *tp){ //Resets all agents to root positions
     for(int i = 0; i < n_agents; i++){ //Agent Number
         map->agent_vec.at(i).agent_x = tp->ag_tree.at(i).tree_vec.at(0).level_vec.at(0).x;
         map->agent_vec.at(i).agent_y = tp->ag_tree.at(i).tree_vec.at(0).level_vec.at(0).y;
@@ -89,108 +71,85 @@ void gridworld::reset_all_agents(multi_agent *map, multi_tree *tp){ //Resets all
     }
 }
 
-void gridworld::find_current_node(multi_agent *map, monte_carlo *mcp, multi_tree *tp, int agn, int l){ //agn = agent number, l = level
-    double ax, ay;
-    ax = map->agent_vec.at(agn).agent_x;
-    ay = map->agent_vec.at(agn).agent_y;
-    assert(l < tp->ag_tree.at(agn).tree_vec.size());
-    mcp->action_check = false;
-    mcp->current_node = node_vec.at(agn);
-    for(int i = 0; i < tp->ag_tree.at(agn).tree_vec.at(l).level_vec.size(); i++){
-        if(mcp->current_node == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).n_number){
-            if(ax == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).x && ay == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).y){
-                mcp->parent_number = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).n_number;
-                mcp->action_check = true;
-                break;
+void gridworld::calculate_global(multi_agent *map, monte_carlo *mcp, multi_tree *tp){
+    int act, count; g_reward = 0;
+    
+    for(int i = 1; i < (x_dim + y_dim); i++){ //Each Agent takes a step if able
+        count = 0;
+        for(int a = 0; a < n_agents; a++){
+            if(ag_sim.at(a) == false){
+                count++;
             }
         }
-    }
-    assert(mcp->action_check == true);
-}
-
-void gridworld::calculate_global(multi_agent *map, monte_carlo *mcp, multi_tree *tp, int s){
-    int act, l; l = 1; g_reward = 0;
-    while(l < s){ //l = tree level
-        if(l >= s){ //If level is equal to or greater than max tree size, quit
+        if(count == n_agents){ //If all agents have no more moves left to make, finish eval
             break;
         }
-        
-        //Each Agent takes a step if able
         for(int a = 0; a < n_agents; a++){ //Agent Number
-            if(l < tp->ag_tree.at(a).tree_vec.size()){ //If level exceeds the maximum size of tree, do not calculate
-                map->check_agent_status(a); //Check if agent is at a goal
-                
-                if(map->agent_in_play == true && ag_sim.at(a) == true){ //If agent has not reached a goal, continue
-                    find_current_node(map, mcp, tp, a, (l-1)); //(agent_number, level) find current parent node
-                    act = mcp->select_move(tp, a, l); //(agent_number, level) choose best child node
-                    if(mcp->action_check == false){
-                        ag_sim.at(a) = false;
+            if(i < tp->ag_tree.at(a).tree_vec.size()){ //If level exceeds the maximum size of tree, do not calculate
+                mcp->parent_number = node_vec.at(a); //Parent is the node number of the previously selected node
+                act = mcp->select_move(tp, a, i); //(agent_number, level) choose best child node
+                node_vec.at(a) = mcp->current_node; //Node selected from select move
+                if(mcp->action_check == false){
+                    ag_sim.at(a) = false;
+                }
+                if(mcp->action_check == true){ //If a child node was found
+                    end_lev.at(a) = i;
+                    map->agent_move(a, act);
+                    map->check_agent_status(a);
+                    map->check_agent_coordinates(a, map->agent_vec.at(a).agent_x, map->agent_vec.at(a).agent_y);
+                    if(map->agent_in_play == false && map->already_taken == false){
+                        g_reward += goal_reward;
                     }
-                    if(mcp->action_check == true){ //If a child node was found
-                        node_vec.at(a) = mcp->current_node;
-                        dif_nodes.at(a) = mcp->current_node;
-                        map->agent_move(a, act);
-                        map->check_agent_status(a);
-                        map->check_agent_coordinates(a, map->agent_vec.at(a).agent_x, map->agent_vec.at(a).agent_y);
-                        if(map->agent_in_play == false && map->already_taken == false){
-                            g_reward += goal_reward;
-                        }
-                        if(map->agent_in_play == false && map->already_taken == true){
-                            g_reward -= penalty;
-                        }
-                        if(map->agent_in_play == true){
-                            g_reward--;
-                        }
+                    if(map->agent_in_play == false && map->already_taken == true){
+                        g_reward -= penalty;
+                    }
+                    if(map->agent_in_play == true){
+                        g_reward--;
                     }
                 }
             }
         }
-        l++; //Increase level
     }
+    dif_node_vec = node_vec;
 }
 
-void gridworld::calculate_difference(multi_agent *map, monte_carlo *mcp, multi_tree *tp, int s, int agn){
-    int act, l; l = 1; double temp_reward; temp_reward = 0;
-    while(l < s){ //l = tree level
-        if(l >= s){ //If level is equal to or greater than max tree size, quit
+void gridworld::calculate_difference(multi_agent *map, monte_carlo *mcp, multi_tree *tp, int agn){
+    int act, count; double temp_reward; temp_reward = 0;
+    for(int i = 1; i < (x_dim + y_dim); i++){
+        count = 0;
+        for(int a = 0; a < n_agents; a++){
+            if(ag_sim.at(a) == false){
+                count++;
+            }
+        }
+        if(count == n_agents){ //If all agents have no more moves left to make, finish eval
             break;
         }
-        //Each Agent takes a step if able
         for(int a = 0; a < n_agents; a++){ //Agent Number
-            if(l < tp->ag_tree.at(a).tree_vec.size()){ //If level exceeds the maximum size of tree, do not calculate
-                map->check_agent_status(a); //Check if agent is at a goal
-                
-                if(map->agent_in_play == true && ag_sim.at(a) == true){ //If agent has not reached a goal, continue
-                    find_current_node(map, mcp, tp, a, (l-1)); //(agent_number, level) find current parent node
-                    act = mcp->select_move(tp, a, l); //(agent_number, level) choose best child node
-                    if(mcp->action_check == false){
-                        ag_sim.at(a) = false;
+            if(i < tp->ag_tree.at(a).tree_vec.size() && a != agn){ //Level cannot be greater than size of tree
+                assert(a != agn);
+                mcp->parent_number = node_vec.at(a); //Parent is the node number of the previously selected node
+                act = mcp->select_move(tp, a, i); //(agent_number, level) choose best child node
+                node_vec.at(a) = mcp->current_node; //Node selected from select move
+                if(mcp->action_check == false){
+                    ag_sim.at(a) = false;
+                }
+                if(mcp->action_check == true){ //If a child node was found
+                    map->agent_move(a, act);
+                    map->check_agent_status(a);
+                    map->check_agent_coordinates(a, map->agent_vec.at(a).agent_x, map->agent_vec.at(a).agent_y);
+                    if(map->agent_in_play == false && map->already_taken == false){
+                        temp_reward += goal_reward;
                     }
-                    if(mcp->action_check == true){ //If a child node was found
-                        node_vec.at(a) = mcp->current_node;
-                        map->agent_move(a, act);
-                        map->check_agent_status(a);
-                        map->check_agent_coordinates(a, map->agent_vec.at(a).agent_x, map->agent_vec.at(a).agent_y);
-                        if(map->agent_in_play == false && map->already_taken == false){
-                            if(a != agn){
-                                temp_reward += goal_reward;
-                            }
-                        }
-                        if(map->agent_in_play == false && map->already_taken == true){
-                            if(a != agn){
-                                temp_reward -= penalty;
-                            }
-                        }
-                        if(map->agent_in_play == true){
-                            if(a != agn){
-                                temp_reward--;
-                            }
-                        }
+                    if(map->agent_in_play == false && map->already_taken == true){
+                        temp_reward -= penalty;
+                    }
+                    if(map->agent_in_play == true){
+                        temp_reward--;
                     }
                 }
             }
         }
-        l++; //Increase level
     }
     
     d_reward = g_reward - temp_reward;
@@ -205,6 +164,6 @@ void gridworld::clear_all_vectors(multi_agent *map, monte_carlo *mcp, multi_tree
     mcp->n_num_vec.clear();
     node_vec.clear();
     ag_sim.clear();
-    dif_nodes.clear();
     dif_rewards.clear();
+    end_lev.clear();
 }

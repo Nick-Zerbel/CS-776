@@ -35,7 +35,11 @@ class multi_agent{
     friend class goal;
 public:
     vector <agent> agent_vec;
+    vector <agent> agent_start_pos;
     vector <goal> goal_vec;
+    vector <goal> goal_start_pos;
+    
+    void create_new_sys(int max_a, int xd, int yd); //Create new goal and agent coordinates
     
     //Goal Functions
     void create_goal_vec();
@@ -48,7 +52,7 @@ public:
     void create_agent_vec(int n, int xd, int yd);
     void assign_agent_coordinates(int n);
     void check_agent_coordinates(int n, double x, double y);
-    void agent_move(int n, int a); //Agent moves based on information collects from MCTS and Reward Evaluation
+    void agent_move(int n, int act); //Agent moves based on information collects from MCTS and Reward Evaluation
     void check_agent_status(int an);
     
     //Parameters
