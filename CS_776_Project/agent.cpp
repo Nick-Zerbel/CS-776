@@ -52,11 +52,15 @@ void multi_agent::create_agent_vec(int n, int xd, int yd){
 }
 
 void multi_agent::assign_agent_coordinates(int n){
-    n_agents = n;
+    n_agents = n; double x, y;
     agent_vec = agent_start_pos;
-    //for(int i = 0; i < n_agents; i++){
-        //cout << "Agent: " << i << " Coordinates: " << agent_vec.at(i).agent_x << " " << agent_vec.at(i).agent_y << endl;
-    //}
+    //Check to make sure no agents are stacked
+    for(int i = 0; i < n_agents; i++){
+        x = agent_vec.at(i).agent_x;
+        y = agent_vec.at(i).agent_y;
+        check_agent_coordinates(i, x ,y);
+        assert(unique_pos == true);
+    }
 }
 
 void multi_agent::agent_move(int n, int act){ //Agent Number, Action
@@ -150,21 +154,29 @@ void multi_agent::create_goal_vec(){
 }
 
 void multi_agent::assign_goal_coordinates(){
+    double x, y;
     goal_vec = goal_start_pos;
-    //for(int i = 0; i < n_agents; i++){
-        //cout << "Goal: " << i << " Coordinates: " << goal_vec.at(i).goal_x << " " << goal_vec.at(i).goal_y << endl;
-    //}
-    //cout << endl;
+    //Check to make sure no goals are stacked
+    for(int i = 0; i < n_agents; i++){
+        x = goal_vec.at(i).goal_x;
+        y = goal_vec.at(i).goal_y;
+        check_goal_coordinates(i, x, y);
+        assert(unique_pos == true);
+    }
 }
 
 void multi_agent::check_goal_coordinates(int n, double xc, double yc){ //Goal number, goal_x, goal_y
     unique_pos = true;
-    for(int i = 0; i < n_agents; i++){ //Check goal coordinates against other goal coordinates
+    for(int i = 0; i < n_agents; i++){ //Check goal coordinates against other goal coordinates and agent coordinates
         if(i != n){
             if(xc == goal_vec.at(i).goal_x && yc == goal_vec.at(i).goal_y){
                 unique_pos = false;
                 break;
             }
+        }
+        if(xc == agent_vec.at(i).agent_x && yc == agent_vec.at(i).agent_y){ //Goal cannot start out at same position as agent
+            unique_pos = false;
+            break;
         }
     }
 }

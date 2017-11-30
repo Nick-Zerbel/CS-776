@@ -23,7 +23,7 @@ using namespace std;
 
 class monte_carlo{
 public:
-    vector <int> rollout_policy;
+    vector <int> rollout_policy; //Contains set of actions for rollout policy
     
     void set_mc_parameters(multi_tree *tp, int a);
     void create_root_nodes(multi_tree *tp, multi_agent *map);
@@ -32,7 +32,6 @@ public:
     //SELECTION
     void select(multi_tree *tp); //Choose an action
     int select_move(multi_tree *tp, int agn, int l); //Choose move which the agent will take after MCTS simulation
-    void reset_q_roll(multi_tree *tp);
     
     //EXPANSION
     void expand(multi_tree *tp);
@@ -50,7 +49,6 @@ public:
     //SIMULATION
     int select_node(multi_tree *tp); //Select an expanded node for rollout
     void rollout(multi_tree *tp, multi_agent *map, int n);
-    void calculate_node_value(multi_tree *tp, int n);
     
     //BACK-PROPAGATION
     void back_propagate(multi_tree *tp);
@@ -60,34 +58,29 @@ public:
     vector <double> reward_vec;
     vector <int> n_num_vec;
     bool action_check; //Flags possible actions as valid or invalid
-    int node_chosen;
-    double parent_visit;
-    double node_visit;
+    double parent_visit; //Number of times parent has been visited
+    double node_visit; //Number of times child has been visited
     int lev; //Current level of the tree
+    int p_lev; //Current parent level
     int n_nodes; //Number of nodes currently in a level in the tree
     int node_number;
     int parent_number;
     int current_node;
     int a_num; //Designates which agent is currently simulating
     int n_agents; //Number of agents and goals
-    int action;
+    int action; //Designates which action should be taken in Gridworld
     
     //Experimental Parameters
-    int rollout_its; //Number of rollout iterations
+    int rollout_steps; //Number of rollout steps
     double epsilon; //Exploration vs Exploitation parameter for UCB1
-    double gamma; //Discount factor for rollout value
-    double alpha; //Discount factor for credit eval values
-    int mc_iterations; //Number of expansion iterations MCTS does each episode
-    int max_lev; //Cap on the maximum tree level
-    double rollout_reward;
+    int mc_iterations; //Number of level expansions MCTS does before running a credit eval
+    double rollout_reward; //Reward given when goal is found in rollout
     
     //Coordinates
     double ax; //Current agent x coordinate
     double ay; //Current agent y coordinate
     double previous_x; //Previous agent x coordinate
     double previous_y; //Previous agent y coordinate
-    double prune_x;
-    double prune_y;
     int x_lim; //Maximum x dimension
     int y_lim; //Maximum y dimension
 };

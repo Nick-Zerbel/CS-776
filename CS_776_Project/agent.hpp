@@ -44,7 +44,6 @@ public:
     //Goal Functions
     void create_goal_vec();
     void assign_goal_coordinates();
-    void rand_goal_move(int gn); //Goals move randomly 50% of the time
     void check_goal_coordinates(int n, double xc, double yc);
     void check_goal_status(int gn); //Checks if goal is still in play
     
@@ -57,9 +56,9 @@ public:
     
     //Parameters
     int n_agents; //Number of agents and goals
-    int xdim;
-    int ydim;
-    bool unique_pos;
+    int xdim; //X dimension of Gridworld
+    int ydim; //Y dimension of Gridworld
+    bool unique_pos; //Detects if an agent or a goal has been stacked on another agent or goal
     bool already_taken; //Indicates if goal is already taken by another agent
     bool goal_in_play; //Indicates if a goal has been captured or not
     bool agent_in_play; //Indicates if agent has captrueed a goal or not

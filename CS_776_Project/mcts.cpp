@@ -37,7 +37,7 @@ void monte_carlo::mc_search(multi_tree *tp, multi_agent *map){
 }
 
 int monte_carlo::select_move(multi_tree *tp, int agn, int l){ //(agent number, level)
-    double best;
+    double best; //Tracks best Q-value for action selection
     action_check = false;
     assert(tp->ag_tree.at(agn).tree_vec.size() > l);
     
@@ -54,7 +54,7 @@ int monte_carlo::select_move(multi_tree *tp, int agn, int l){ //(agent number, l
         goto skip;
     }
     
-    best = *max_element(reward_vec.begin(), reward_vec.end());
+    best = *max_element(reward_vec.begin(), reward_vec.end()); //Best Q-value from among child nodes in level
     reward_vec.clear();
     
     for(int i = 0; i < tp->ag_tree.at(agn).tree_vec.at(l).level_vec.size(); i++){
@@ -77,49 +77,52 @@ skip:
 void monte_carlo::select(multi_tree *tp){
     double best, q_val;
     bool no_nodes;
-    previous_x = tp->ag_tree.at(a_num).tree_vec.at(0).level_vec.at(0).x;
+    previous_x = tp->ag_tree.at(a_num).tree_vec.at(0).level_vec.at(0).x; //Set Coordinates to Root Position
     previous_y = tp->ag_tree.at(a_num).tree_vec.at(0).level_vec.at(0).y;
     parent_number = tp->ag_tree.at(a_num).tree_vec.at(0).level_vec.at(0).n_number;
     parent_visit = tp->ag_tree.at(a_num).tree_vec.at(0).level_vec.at(0).visit_count;
     
     if(tp->ag_tree.at(a_num).tree_vec.size() == 1){ //If there is only the root level, go immediately to expansion
+        p_lev = 0;
         lev = 1;
         goto expansion_phase;
     }
     
     reward_vec.clear();
-    for(int i = 1; i < tp->ag_tree.at(a_num).tree_vec.size(); i++){
-        no_nodes = true;
-        for(int j = 0; j < tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.size(); j++){
-            if(parent_number == tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).p_number){
+    for(int i = 1; i < tp->ag_tree.at(a_num).tree_vec.size(); i++){ //Starting at level 1 record all q values of child nodes
+        no_nodes = true; //Boolean used to find when we reach an unexpanded node
+        for(int j = 0; j < tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.size(); j++){ //For all nodes in the current level
+            if(parent_number == tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).p_number){ //If it is a child node
                 node_visit = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).visit_count;
-                q_val = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).q_node;
+                q_val = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).q_node; //Current Q-value of node
                 tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).UCB1 = q_val + epsilon*sqrt(log(parent_visit)/node_visit); //UCB1 Formula
                 reward_vec.push_back(tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).UCB1);
-                no_nodes = false;
+                no_nodes = false; //If a child node was found, the current parent node is expanded
             }
         }
         
         if(no_nodes == true){
-            lev = i;
+            lev = i; //If there are no children of the current parent in this level, then the parent needs to be expanded
             goto expansion_phase;
         }
         
-        best = *max_element(reward_vec.begin(), reward_vec.end());
+        best = *max_element(reward_vec.begin(), reward_vec.end()); //Pick the highest Q-value from among child nodes found
         reward_vec.clear();
         for(int k = 0; k < tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.size(); k++){
             if(best == tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(k).UCB1 && parent_number == tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(k).p_number){
                 parent_visit = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(k).visit_count;
-                parent_number = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(k).n_number;
+                parent_number = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(k).n_number; //New parent node
                 previous_x = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(k).x;
                 previous_y = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(k).y;
-                lev = i + 1;
+                lev = i + 1; //Needed in case selection reaches the bottom most level of the tree
+                p_lev = i;
                 break;
             }
         }
     }
     
 expansion_phase:
+    assert(p_lev == lev-1);
     assert(lev <= tp->ag_tree.at(a_num).tree_vec.size());
 }
 
@@ -178,9 +181,6 @@ void monte_carlo::move_right(multi_tree *tp){
 void monte_carlo::no_move(multi_tree *tp){
     reset_coordinates();
     check_boundaries(ax, ay);
-    if(lev > max_lev){
-        //action_check = false;
-    }
     if(action_check == true){
         prune(tp, lev-8);
     }
@@ -192,9 +192,6 @@ void monte_carlo::no_move(multi_tree *tp){
 
 void monte_carlo::pruning(multi_tree *tp){
     check_boundaries(ax, ay); //Agent cannot go out of bounds
-    if(lev > max_lev){
-        //action_check = false;
-    }
     if(action_check == true){
         prune(tp, lev); //Agent cannot revisit a previous state during a MCTS simulation
     }
@@ -217,11 +214,12 @@ void monte_carlo::check_boundaries(double xx, double yy){
 }
 
 void monte_carlo::prune(multi_tree *tp, int l){
-    for(int i = l-1; i >= 0; i--){
+    double prune_x, prune_y;
+    for(int i = l-1; i >= 0; i--){ //Starting from the parent level, make sure no duplicate states are already in the tree
         for(int j = 0; j < tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.size(); j++){
             prune_x = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).x;
             prune_y = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).y;
-            if(ax == prune_x && ay == prune_y){
+            if(ax == prune_x && ay == prune_y){ //If a state has been visited before, prune the tree
                 action_check = false;
                 break;
             }
@@ -237,22 +235,21 @@ void monte_carlo::update_node_numbers(multi_tree *tp){
     n_nodes = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.size();
 }
 
-void monte_carlo::reset_coordinates(){
+void monte_carlo::reset_coordinates(){ //Reset agent coordinates to parent node state
     ax = previous_x;
     ay = previous_y;
 }
 
 //SIMULATION-----------------------------------------------------------------------------------------------------------------
-
 void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
     double q_val; q_val = 0; int act;
     double x, y, xi, yi;
     x = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).x;
     y = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).y;
-    xi = x; yi = y;
+    xi = x; yi = y; //Initial coordinates at beginning of rollout
     
-    for(int i = 0; i < rollout_its; i++){
-        act = rollout_policy.at(i);
+    for(int i = 0; i < rollout_steps; i++){
+        act = rollout_policy.at(i); //Rollout occurs according to defined policy from GA
         if(act == 0){
             x--;
             check_boundaries(x, y);
@@ -283,7 +280,7 @@ void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
         }
         
         for(int j = 0; j < map->n_agents; j++){
-            if(x == map->goal_vec.at(j).goal_x && y == map->goal_vec.at(j).goal_y){ //If a goal is reached, +100
+            if(x == map->goal_vec.at(j).goal_x && y == map->goal_vec.at(j).goal_y){
                 q_val += rollout_reward;
             }
         }
@@ -310,8 +307,8 @@ void monte_carlo::back_propagate(multi_tree *tp){
         q_val = 0;
     }
     
-    reward_vec.clear();
     //Back-Propagate
+    reward_vec.clear();
     for(int i = lev-1; i >= 0; i--){ //i = level
         for(int j = 0; j < tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.size(); j++){ //j = node
             if(parent_number == tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).n_number){

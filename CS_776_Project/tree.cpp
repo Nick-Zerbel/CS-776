@@ -10,12 +10,12 @@
 
 void multi_tree::create_level(int agn){
     level l;
-    ag_tree.at(agn).tree_vec.push_back(l);
+    ag_tree.at(agn).tree_vec.push_back(l); //Push back an instance of a level into the current tree
 }
 
 void multi_tree::create_node(int lev, int pos, double agx, double agy, int ag_num, int node_num, int p_num, int a){
     node n;
-    ag_tree.at(ag_num).tree_vec.at(lev).level_vec.push_back(n);
+    ag_tree.at(ag_num).tree_vec.at(lev).level_vec.push_back(n); //Push back instance of a node into the current level
     
     ag_tree.at(ag_num).tree_vec.at(lev).level_vec.at(pos).a_number = ag_num;
     ag_tree.at(ag_num).tree_vec.at(lev).level_vec.at(pos).x = agx;
@@ -30,5 +30,5 @@ void multi_tree::create_node(int lev, int pos, double agx, double agy, int ag_nu
 
 void multi_tree::create_tree(){
     tree t;
-    ag_tree.push_back(t);
+    ag_tree.push_back(t); //Create a tree for an agent
 }

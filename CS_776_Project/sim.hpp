@@ -33,24 +33,28 @@ public:
     vector <int> dif_node_vec; //Keeps Track of where each agent's rollout ends in cred eval
     vector <double> dif_rewards; //Tacks the difference reward for each agent
     vector <bool> ag_sim;
-    vector <int> episodes;
+    
     vector <int> end_lev;
     void reset_all_agents(multi_agent *map, multi_tree *tp);
     void calculate_global(multi_agent *map, monte_carlo *mcp, multi_tree *tp);
     void calculate_difference(multi_agent *map, monte_carlo *mcp, multi_tree *tp, int agn);
     void clear_all_vectors(multi_agent *map, monte_carlo *mcp, multi_tree *tp); //Clear all vectors for next stat run
     
+    //Performance Measures
+    vector <double> episodes;
+    vector <double> agent_steps;
+    
     //Paramaters
-    int x_dim;
-    int y_dim;
-    int learn_its; //Tracks the number of learning episodes
+    int x_dim; //X dimension of Gridworld
+    int y_dim; //Y dimension of Gridworld
+    int learn_its; //Tracks the number of learning episodes needed for MCTS to find a solution
     bool goal_check; //Makes sure no two agents or goals start off in the same state
     int n_agents; //Number of agents and goals
-    bool all_agents_at_goal;
+    bool all_agents_at_goal; //Used to check for termination condition
     double g_reward; //Global Reward
     double d_reward; //Difference Reward
-    double goal_reward;
-    double penalty;
+    double goal_reward; //Credit Eval Reward for and agent reaching a goal
+    double penalty; //Penalty incurred for an agent reaching an already captured goal
 };
 
 #endif /* sim_hpp */
