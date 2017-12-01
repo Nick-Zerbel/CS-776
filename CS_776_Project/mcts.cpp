@@ -24,10 +24,10 @@ void monte_carlo::create_root_nodes(multi_tree *tp, multi_agent *map){
 }
 
 void monte_carlo::mc_search(multi_tree *tp, multi_agent *map){
-    for(int j = 0; j < mc_iterations; j++){ //j = number of mcts simulations
+    for(int exp = 0; exp < mc_iterations; exp++){ //exp = number of mcts sexpansions per learning episode
         select(tp);
         expand(tp);
-        for(int en = 0; en < tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.size(); en++){ //Rollout all newly expanded nodes
+        for(int en = 0; en < tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.size(); en++){ //Rollout newly expanded nodes
             if(parent_number == tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(en).p_number){
                 rollout(tp, map, en);
             }
@@ -37,6 +37,7 @@ void monte_carlo::mc_search(multi_tree *tp, multi_agent *map){
 }
 
 int monte_carlo::select_move(multi_tree *tp, int agn, int l){ //(agent number, level)
+    int count; count = 0;
     double best; //Tracks best Q-value for action selection
     action_check = false;
     assert(tp->ag_tree.at(agn).tree_vec.size() > l);
@@ -51,6 +52,7 @@ int monte_carlo::select_move(multi_tree *tp, int agn, int l){ //(agent number, l
     
     if(action_check == false){
         current_node = parent_number;
+        action = 4; //Stay in position (just in case)
         goto skip;
     }
     
@@ -62,11 +64,12 @@ int monte_carlo::select_move(multi_tree *tp, int agn, int l){ //(agent number, l
             if(best == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).UCB1){
                 action = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).action;
                 current_node = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).n_number; //Selected node
+                count++;
                 break;
             }
         }
     }
-    
+    assert(count == 1);
 skip:
     assert(action >= 0);
     assert(action <= 4);
@@ -75,8 +78,7 @@ skip:
 
 //SELECTION------------------------------------------------------------------------------------------------------------
 void monte_carlo::select(multi_tree *tp){
-    double best, q_val;
-    bool no_nodes;
+    double best, q_val; bool no_nodes;
     previous_x = tp->ag_tree.at(a_num).tree_vec.at(0).level_vec.at(0).x; //Set Coordinates to Root Position
     previous_y = tp->ag_tree.at(a_num).tree_vec.at(0).level_vec.at(0).y;
     parent_number = tp->ag_tree.at(a_num).tree_vec.at(0).level_vec.at(0).n_number;
@@ -95,7 +97,7 @@ void monte_carlo::select(multi_tree *tp){
             if(parent_number == tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).p_number){ //If it is a child node
                 node_visit = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).visit_count;
                 q_val = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).q_node; //Current Q-value of node
-                tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).UCB1 = q_val + epsilon*sqrt(log(parent_visit)/node_visit); //UCB1 Formula
+                tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).UCB1 = q_val + (epsilon*sqrt(log(parent_visit)/node_visit));
                 reward_vec.push_back(tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).UCB1);
                 no_nodes = false; //If a child node was found, the current parent node is expanded
             }
@@ -122,6 +124,7 @@ void monte_carlo::select(multi_tree *tp){
     }
     
 expansion_phase:
+    //cout << "lev: " << lev << endl;
     assert(p_lev == lev-1);
     assert(lev <= tp->ag_tree.at(a_num).tree_vec.size());
 }
@@ -181,9 +184,7 @@ void monte_carlo::move_right(multi_tree *tp){
 void monte_carlo::no_move(multi_tree *tp){
     reset_coordinates();
     check_boundaries(ax, ay);
-    if(action_check == true){
-        prune(tp, lev-8);
-    }
+    prune(tp, lev-(x_lim+y_lim));
     if(action_check == true){
         update_node_numbers(tp);
         tp->create_node(lev, n_nodes, ax, ay, a_num, node_number, parent_number, 4);
@@ -243,45 +244,52 @@ void monte_carlo::reset_coordinates(){ //Reset agent coordinates to parent node 
 //SIMULATION-----------------------------------------------------------------------------------------------------------------
 void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
     double q_val; q_val = 0; int act;
-    double x, y, xi, yi;
+    double dist, x, y, xi, yi, x_root, y_root;
     x = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).x;
     y = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).y;
-    xi = x; yi = y; //Initial coordinates at beginning of rollout
+    xi = x; yi = y;
+    x_root = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(0).x; //Starting Position
+    y_root = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(0).y; //Starting Position
     
     for(int i = 0; i < rollout_steps; i++){
         act = rollout_policy.at(i); //Rollout occurs according to defined policy from GA
         if(act == 0){
             x--;
             check_boundaries(x, y);
-            if(action_check == false){
+            dist = abs(x-xi) + abs(y-yi);
+            if(action_check == false || dist > obs_dist){
                 x++;
             }
         }
         if(act == 1){
             y++;
             check_boundaries(x, y);
-            if(action_check == false){
+            dist = abs(x-xi) + abs(y-yi);
+            if(action_check == false || dist > obs_dist){
                 y--;
             }
         }
         if(act == 2){
             y--;
             check_boundaries(x, y);
-            if(action_check == false){
+            dist = abs(x-xi) + abs(y-yi);
+            if(action_check == false || dist > obs_dist){
                 y++;
             }
         }
         if(act == 3){
             x++;
             check_boundaries(x, y);
-            if(action_check == false){
+            dist = abs(x-xi) + abs(y-yi);
+            if(action_check == false || dist > obs_dist){
                 x--;
             }
         }
         
         for(int j = 0; j < map->n_agents; j++){
             if(x == map->goal_vec.at(j).goal_x && y == map->goal_vec.at(j).goal_y){
-                q_val += rollout_reward;
+                dist = abs(x-x_root) + abs(y-y_root); //Distance from starting position
+                q_val += (rollout_reward);
             }
         }
     }
@@ -291,100 +299,96 @@ void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
 //BACK-PROPAGATION-----------------------------------------------------------------------------------------------------------
 void monte_carlo::back_propagate(multi_tree *tp){
     double n; n = 0;
-    double q_val, q_prev, nv; q_val = 0;
+    double q_val;
+    
+    reward_vec.clear();
     
     for(int i = 0; i < tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.size(); i++){
         if(parent_number == tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(i).p_number){
-            q_val += tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(i).q_node;
+            reward_vec.push_back(tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(i).q_node);
             n++;
         }
     }
     
     if(n > 0){
-        q_val /= n; //Average across all newly expanded nodes
+        q_val = *max_element(reward_vec.begin(), reward_vec.end()); //Average across all newly expanded nodes
     }
     if(n == 0){
         q_val = 0;
     }
     
     //Back-Propagate
-    reward_vec.clear();
     for(int i = lev-1; i >= 0; i--){ //i = level
         for(int j = 0; j < tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.size(); j++){ //j = node
             if(parent_number == tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).n_number){
                 tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).visit_count++;
-                
-                //Calculate MC Q-Value
-                q_prev = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).q_node; //Previous q value
-                nv = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).visit_count; //Number of visits to this node
-                tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).q_node = q_prev + ((q_val - q_prev)/nv); //MCTS Q-value
+                tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).q_node += q_val; //MCTS Q-value
                 parent_number = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).p_number;
                 break;
             }
         }
         
         n = 0;
-        q_val = 0;
+        reward_vec.clear();
         for(int tn = 0; tn < tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.size(); tn++){
             if(parent_number == tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(tn).p_number){
-                q_val += tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(tn).q_node;
+                reward_vec.push_back(tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(tn).q_node);
                 n++;
             }
         }
         assert(n > 0);
-        q_val /= n; //A parent's value is the average of its children's action values
+        q_val = *max_element(reward_vec.begin(), reward_vec.end()); //A parent's value is the average of its children's action values
+        reward_vec.clear();
     }
 }
 
 void monte_carlo::back_propagate_evals(multi_agent *map, multi_tree *tp, double reward, int agn, int l, int nn){
-    double q_val, q_prev, count, nv;
+    double q_val; int count;
     //count = count for number of nodes, nv = node visit count
     
     count = 0;
     for(int i = 0; i < tp->ag_tree.at(agn).tree_vec.at(l).level_vec.size(); i++){ //Update current node value
         if(nn == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).n_number){
             q_val = reward;
-            q_prev = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).q_node;
-            nv = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).visit_count;
-            tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).q_node = q_prev + ((q_val-q_prev)/nv);
+            tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).q_node += q_val;
             parent_number = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).p_number;
             count++;
             break;
         }
     }
     assert(count > 0);
-
+    
     count = 0;
-    q_val = 0;
+    reward_vec.clear();
     for(int tn = 0; tn < tp->ag_tree.at(agn).tree_vec.at(l).level_vec.size(); tn++){
         if(parent_number == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(tn).p_number){
-            q_val += tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(tn).q_node;
+            reward_vec.push_back(tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(tn).q_node);
             count++;
         }
     }
     assert(count > 0);
-    q_val /= count; //A parent's value is the average of its children's action values
+    q_val = *max_element(reward_vec.begin(), reward_vec.end());
     
     for(int i = l-1; i >= 0; i--){ //i = level
         for(int j = 0; j < tp->ag_tree.at(agn).tree_vec.at(i).level_vec.size(); j++){ //j = node
             if(parent_number == tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).n_number){
-                q_prev = tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).q_node; //Previous q value
-                nv = tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).visit_count; //Number of visits to this node
-                tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).q_node = q_prev + ((q_val - q_prev)/nv); //MCTS Q-value
+                tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).q_node += q_val; //MCTS Q-value
                 parent_number = tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).p_number;
                 break;
             }
         }
         
         count = 0;
-        q_val = 0;
+        reward_vec.clear();
         for(int tn = 0; tn < tp->ag_tree.at(agn).tree_vec.at(i).level_vec.size(); tn++){
             if(parent_number == tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(tn).p_number){
-                q_val += tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(tn).q_node;
+                reward_vec.push_back(tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(tn).q_node);
                 count++;
             }
         }
         assert(count > 0);
-        q_val /= count; //A parent's value is the average of its children's action values
+        q_val = *max_element(reward_vec.begin(), reward_vec.end());
     }
 }
+
+

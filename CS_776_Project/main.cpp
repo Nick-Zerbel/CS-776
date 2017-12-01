@@ -43,32 +43,29 @@ void run_mcts(gridworld *gp, multi_agent *map, monte_carlo *mcp, multi_tree *tp,
         for(int s = 0; s < sruns; s++){
             gp->initialize_parameters(map, mcp);
             mcp->create_root_nodes(tp, map);
-            while(gp->all_agents_at_goal == false){
+            while(gp->gridworld_finished == false){
                 gp->learn_its++; //Tracks the number of learning episodes until MCTS find a solution
-                if(gp->learn_its >= rmax){
-                    break;
-                }
                 for(int anum = 0; anum < gp->n_agents; anum++){ //anum = agent number
                     mcp->set_mc_parameters(tp, anum);
                     mcp->mc_search(tp, map); //Runs MCTS for defined number of expansions
                     mcp->n_num_vec.at(anum) = mcp->node_number; //Used to track what the current node number is in each tree
                 }
                 gp->cred_evals(map, tp, mcp);
-                for(int aaa = 0; aaa < map->n_agents; aaa++){
-                    map->check_agent_coordinates(aaa, map->agent_vec.at(aaa).agent_x, map->agent_vec.at(aaa).agent_y);
-                    if(map->already_taken == true){
-                        gp->reset_all_agents(map, tp);
-                        break;
-                    }
+                //Check to see if agents have arrived at goals
+                gp->check_goal_conditions(map);
+                if(gp->goal_check == true){
+                    gp->gridworld_finished = true;
+                    //cout << "All Agents At Goal!" << endl;
                 }
-                gp->check_goal_conditions(map); //Check if all agents are coupled with goals
-                if(gp->all_agents_at_goal == false){
+                if(gp->gridworld_finished == false){
                     gp->reset_all_agents(map, tp);
+                }
+                if(gp->learn_its >= rmax){
+                    break;
                 }
             }
             //Record Information
             gp->episodes.at(group) = (double)gp->learn_its;
-            gp->agent_steps.at(group) = (double)*max_element(gp->end_lev.begin(), gp->end_lev.end());
             gp->clear_all_vectors(map, mcp, tp);
         }
         group++;
@@ -90,30 +87,30 @@ int main() {
     int max_agents = 4; //Maximum number of agents to be tested
     int n_groups = ((max_agents - starting_agents)/agent_increment) + 1; //Number of agent groups being tested
     int stat_runs = 1; //Number of statistical runs for MCTS
-    int max_run = 300; //Cuts off the simulation if the number of iterations exceed this amount
-    mcp->epsilon = 0; //UCB1 exploration constant (0 = greedy action selection)
-    mcp->rollout_steps = 20; //Number of rollout moves
-    mcp->mc_iterations = 3; //Number of iterations of MCTS each agent performs
+    int max_run = 200; //Cuts off the simulation if the number of iterations exceed this amount
+    mcp->obs_dist = 100;
+    mcp->epsilon = 1; //UCB1 exploration constant (0 = greedy action selection)
+    mcp->rollout_steps = 10; //Number of rollout moves
+    mcp->mc_iterations = 1; //Number of iterations of MCTS each agent performs
     gp->goal_reward = 10;
     mcp->rollout_reward = 1;
-    gp->penalty = 1;
+    gp->penalty = 0;
     
     //EA Parameters
-    int ea_s_runs = 10; //Number of stat runs for the EA
+    int ea_s_runs = 30; //Number of stat runs for the EA
     int max_gen = 100; //Maximum number of generations to evolve
     eap->pop_size = 10; //Population size (must be even)
-    eap->p_cross = 0.7; //Probability of Crossover
-    eap->p_mut = 0.2; //Probability of mutation
+    eap->p_cross = 0.67; //Probability of Crossover
+    eap->p_mut = 0.3; //Probability of mutation
     eap->a_size = mcp->rollout_steps;
     
     //Fitness Data
-    double n_successful; //Number of succsseful runs out of all stat runs
+    double n_successful;
     double optimality; //Percentage optimality
-    double max_steps = (double)gp->x_dim + (double)gp->y_dim; //Maximum Number of steps
-    double reliability; //Percentage reliability
+    double reliability; //Percentage reliability (what percentage of runs were successful)
     double mr = (double)max_run; //Double version of maximum number of MCTS runs
     double total_groups = (double)n_groups; //Total number of agent groups
-    double speed;
+    double speed; //How many episodes it takes MCTS to learn
     
     clear_txt_files(); //Clear all txt files which get appended
     
@@ -122,7 +119,6 @@ int main() {
     
     for(int i = 0; i < n_groups; i++){
         gp->episodes.push_back(0); //For measuring speed and reliability
-        gp->agent_steps.push_back(0); //For measuring optimality
     }
     
     for(int srn = 0; srn < ea_s_runs; srn++){ //Stat Runs for EA
@@ -139,22 +135,20 @@ int main() {
                 
                 //Evaluate Fitness
                 n_successful = total_groups;
-                speed = 0;
-                optimality = 0;
                 for(int ng = 0; ng < n_groups; ng++){
-                    speed += mr - gp->episodes.at(ng);
-                    optimality += max_steps - gp->agent_steps.at(ng);
+                    speed = mr - gp->episodes.at(ng); //Average number of episodes
+                    optimality = 100*(mr - gp->episodes.at(ng))/mr;
                     if(gp->episodes.at(ng) >= mr){
-                        n_successful -= 1;
+                        n_successful--;
                     }
                 }
-                reliability = n_successful/total_groups; //Number of successful runs out of total runs
-                
-                eap->fit_vec.at(j) = speed;
+                reliability = 100*(n_successful/total_groups);
+                eap->fit_vec.at(j) = reliability + optimality;
             }
             eap->re_order();
             eap->calc_fit_prob();
             max_fit << *max_element(eap->fit_vec.begin(), eap->fit_vec.end()) << "\t";
+            cout << "Max Fit: " << *max_element(eap->fit_vec.begin(), eap->fit_vec.end()) << endl;
             avg_fit << eap->fit_sum/eap->pop_size << "\t";
             min_fit << *min_element(eap->fit_vec.begin(), eap->fit_vec.end())<< "\t";
             eap->crossover();

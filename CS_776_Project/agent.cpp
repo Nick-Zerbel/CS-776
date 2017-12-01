@@ -49,6 +49,7 @@ void multi_agent::create_agent_vec(int n, int xd, int yd){
     }
     ag << endl;
     ag.close();
+    agent_start_pos = agent_vec;
 }
 
 void multi_agent::assign_agent_coordinates(int n){
@@ -67,6 +68,8 @@ void multi_agent::agent_move(int n, int act){ //Agent Number, Action
     double ax, ay;
     ax = agent_vec.at(n).agent_x;
     ay = agent_vec.at(n).agent_y;
+    assert(act <= 4);
+    assert(act >= 0);
     
     if(act == 0){
         ax--;
@@ -80,17 +83,19 @@ void multi_agent::agent_move(int n, int act){ //Agent Number, Action
     if(act == 3){
         ax++;
     }
+    if(act == 4){
+        ax = agent_vec.at(n).agent_x;
+        ay = agent_vec.at(n).agent_y;
+    }
     agent_vec.at(n).agent_x = ax;
     agent_vec.at(n).agent_y = ay;
 }
 
 void multi_agent::check_agent_coordinates(int n, double x, double y){
-    already_taken = false;
     unique_pos = true;
     for(int i = 0; i < n_agents; i++){ //Check agent coordinates against other agent coordinates
         if(i != n){
             if(x == agent_vec.at(i).agent_x && y == agent_vec.at(i).agent_y){
-                already_taken = true;
                 unique_pos = false;
                 break;
             }
@@ -105,7 +110,7 @@ void multi_agent::check_agent_status(int an){ //Checks if agent is at  goal
     
     agent_in_play = true;
     for(int i = 0; i < n_agents; i++){
-        if(x == goal_vec.at(i).goal_x && y == goal_vec.at(i).goal_y){
+        if(x == goal_vec.at(i).goal_x && y == goal_vec.at(i).goal_y){ //If agent is at a goal, it is no longer in play
             agent_in_play = false;
             break;
         }
@@ -151,6 +156,7 @@ void multi_agent::create_goal_vec(){
     }
     gs << endl;
     gs.close();
+    goal_start_pos = goal_vec;
 }
 
 void multi_agent::assign_goal_coordinates(){
@@ -203,3 +209,4 @@ void multi_agent::create_new_sys(int max_a, int xd, int yd){
     agent_vec.clear();
     goal_vec.clear();
 }
+

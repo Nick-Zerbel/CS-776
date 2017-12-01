@@ -72,6 +72,7 @@ public:
     
     //Experimental Parameters
     int rollout_steps; //Number of rollout steps
+    double obs_dist;
     double epsilon; //Exploration vs Exploitation parameter for UCB1
     int mc_iterations; //Number of level expansions MCTS does before running a credit eval
     double rollout_reward; //Reward given when goal is found in rollout

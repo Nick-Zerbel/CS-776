@@ -59,7 +59,6 @@ public:
     int xdim; //X dimension of Gridworld
     int ydim; //Y dimension of Gridworld
     bool unique_pos; //Detects if an agent or a goal has been stacked on another agent or goal
-    bool already_taken; //Indicates if goal is already taken by another agent
     bool goal_in_play; //Indicates if a goal has been captured or not
     bool agent_in_play; //Indicates if agent has captrueed a goal or not
 };

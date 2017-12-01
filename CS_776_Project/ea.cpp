@@ -89,9 +89,9 @@ int ea::select_parent(){
 
 void ea::crossover(){
     double prob; int p1, p2, cp;
-    new_pop.at(0) = pop.at(0);
-    new_pop.at(1) = pop.at(1);
-    for(int i = 1; i < (pop_size/2); i++){
+    //new_pop.at(0) = pop.at(0);
+    //new_pop.at(1) = pop.at(1);
+    for(int i = 0; i < (pop_size/2); i++){
         prob = (double)(rand())/RAND_MAX;
         p1 = select_parent(); //Parent 1
         p2 = select_parent(); //Parent 2
@@ -117,7 +117,7 @@ void ea::crossover(){
 
 void ea::mutation(){
     double prob; int b, a;
-    for(int i = 2; i < pop_size; i++){
+    for(int i = 0; i < pop_size; i++){
         prob = (double)(rand())/RAND_MAX;
         if(prob <= p_mut){
             b = rand() % a_size;
