@@ -18,6 +18,12 @@
 
 using namespace std;
 
+class limit{
+public:
+    double upper;
+    double lower;
+};
+
 class policy{
 public:
     vector <int> pol;
@@ -26,27 +32,43 @@ public:
 class ea{
     friend class parameters;
 public:
-    vector <policy> pop;
     vector <policy> new_pop;
+    vector <policy> new_roll_pop;
     vector <double> fit_vec;
     vector <double> fit_prob;
     
+    //General Functions
     void create_pop();
-    void select_parents();
     void re_order();
     void calc_fit_prob();
-    void mutation();
-    void crossover();
     int select_parent();
     void clear_vecs();
     
+    //Population of Weights
+    vector <policy> pop;
+    vector <int> best_policy;
+    void decode(int p, vector <int> weights);
+    void crossover();
+    void mutation();
+    
+    //Population of Actions
+    vector <int> best_roll_pol;
+    vector <policy> roll_pop;
+    void roll_mutation();
+    void roll_crossover();
+    
+    //Parameters
+    double best_fit; //Best fitness of all time in statistical run
     double fit;
     double p_mut; //Probability of Mutation
     double p_cross; //Probability of Crossover
-    double num;
+    double num; //Number decoded from binary string
     double fit_sum;
     int pop_size;
-    int a_size; //Size of binary array
+    int n_steps; //Number of rollout steps
+    int n_weights; //Number of weights needed for EA
+    int a_size; //Array Size
+    int s_size; //String Size
 };
 
 #endif /* ea_hpp */

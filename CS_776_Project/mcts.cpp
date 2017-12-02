@@ -252,7 +252,8 @@ void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
     y_root = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(0).y; //Starting Position
     
     for(int i = 0; i < rollout_steps; i++){
-        act = rollout_policy.at(i); //Rollout occurs according to defined policy from GA
+        //act = rand() % 5; //Choose a random move from the 4 available moves
+        act = rollout_policy.at(i);
         if(act == 0){
             x--;
             check_boundaries(x, y);
@@ -289,7 +290,7 @@ void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
         for(int j = 0; j < map->n_agents; j++){
             if(x == map->goal_vec.at(j).goal_x && y == map->goal_vec.at(j).goal_y){
                 dist = abs(x-x_root) + abs(y-y_root); //Distance from starting position
-                q_val += (rollout_reward);
+                q_val += (w_rreward*rollout_reward-w_dist*dist);
             }
         }
     }

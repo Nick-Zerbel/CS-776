@@ -74,7 +74,7 @@ void gridworld::reset_all_agents(multi_agent *map, multi_tree *tp){ //Resets all
 }
 
 void gridworld::calculate_global(multi_agent *map, monte_carlo *mcp, multi_tree *tp){
-    int act, count; g_reward = 0;
+    int act, count; g_reward = 0; double dist;
     
     for(int i = 1; i < 100; i++){ //Each Agent takes a step if able
         count = 0;
@@ -105,17 +105,44 @@ void gridworld::calculate_global(multi_agent *map, monte_carlo *mcp, multi_tree 
                     map->check_agent_status(a);
                     map->check_agent_coordinates(a, map->agent_vec.at(a).agent_x, map->agent_vec.at(a).agent_y);
                     if(map->agent_in_play == false && map->unique_pos == true){
-                        g_reward += goal_reward;
+                        g_reward += w_greward*goal_reward;
+                        for(int oa = 0; oa < n_agents; oa++){ //Penalty for being close to other agents
+                            if(oa != a){
+                                dist = abs(map->agent_vec.at(a).agent_x - map->agent_vec.at(oa).agent_x);
+                                dist += abs(map->agent_vec.at(a).agent_y - map->agent_vec.at(oa).agent_y);
+                                if(dist <= mcp->obs_dist){
+                                    g_reward -= w_prox*1;
+                                }
+                            }
+                        }
                         ag_sim.at(a) = false;
                         assert(i == end_lev.at(a));
                     }
                     if(map->agent_in_play == false && map->unique_pos == false){
-                        g_reward -= penalty;
+                        g_reward -= w_penalty*penalty;
+                        for(int oa = 0; oa < n_agents; oa++){ //Penalty for being close to other agents
+                            if(oa != a){
+                                dist = abs(map->agent_vec.at(a).agent_x - map->agent_vec.at(oa).agent_x);
+                                dist += abs(map->agent_vec.at(a).agent_y - map->agent_vec.at(oa).agent_y);
+                                if(dist <= mcp->obs_dist){
+                                    g_reward -= w_prox*1;
+                                }
+                            }
+                        }
                         ag_sim.at(a) = false;
                         assert(i == end_lev.at(a));
                     }
                     if(map->agent_in_play == true){
-                        //g_reward--;
+                        g_reward -= w_step*1;
+                        for(int oa = 0; oa < n_agents; oa++){ //Penalty for being close to other agents
+                            if(oa != a){
+                                dist = abs(map->agent_vec.at(a).agent_x - map->agent_vec.at(oa).agent_x);
+                                dist += abs(map->agent_vec.at(a).agent_y - map->agent_vec.at(oa).agent_y);
+                                if(dist <= mcp->obs_dist){
+                                    g_reward -= w_prox*1;
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -125,7 +152,7 @@ void gridworld::calculate_global(multi_agent *map, monte_carlo *mcp, multi_tree 
 }
 
 void gridworld::calculate_difference(multi_agent *map, monte_carlo *mcp, multi_tree *tp, int agn){
-    int act, count; double temp_reward; temp_reward = 0;
+    int act, count; double temp_reward, dist; temp_reward = 0;
     for(int i = 1; i < 100; i++){ //Each Agent takes a step if able
         count = 0;
         for(int aa = 0; aa < n_agents; aa++){
@@ -154,18 +181,45 @@ void gridworld::calculate_difference(multi_agent *map, monte_carlo *mcp, multi_t
                     map->agent_move(a, act);
                     map->check_agent_status(a);
                     map->check_agent_coordinates(a, map->agent_vec.at(a).agent_x, map->agent_vec.at(a).agent_y);
-                    if(map->agent_in_play == false && map->unique_pos == true){
-                        temp_reward += goal_reward;
+                    if(map->agent_in_play == false && map->unique_pos == true){ //Agent is first to a goal
+                        temp_reward += w_greward*goal_reward;
+                        for(int oa = 0; oa < n_agents; oa++){ //Penalty for being close to other agents
+                            if(oa != a && oa != agn){
+                                dist = abs(map->agent_vec.at(a).agent_x - map->agent_vec.at(oa).agent_x);
+                                dist += abs(map->agent_vec.at(a).agent_y - map->agent_vec.at(oa).agent_y);
+                                if(dist <= mcp->obs_dist){
+                                    temp_reward -= w_prox*1;
+                                }
+                            }
+                        }
                         ag_sim.at(a) = false;
                         assert(i == end_lev.at(a));
                     }
-                    if(map->agent_in_play == false && map->unique_pos == false){
-                        temp_reward -= penalty;
+                    if(map->agent_in_play == false && map->unique_pos == false){ //Agent arrives at goal occupied by another
+                        temp_reward -= w_penalty*penalty;
+                        for(int oa = 0; oa < n_agents; oa++){ //Penalty for being close to other agents
+                            if(oa != a && oa != agn){
+                                dist = abs(map->agent_vec.at(a).agent_x - map->agent_vec.at(oa).agent_x);
+                                dist += abs(map->agent_vec.at(a).agent_y - map->agent_vec.at(oa).agent_y);
+                                if(dist <= mcp->obs_dist){
+                                    temp_reward -= w_prox*1;
+                                }
+                            }
+                        }
                         ag_sim.at(a) = false;
                         assert(i == end_lev.at(a));
                     }
-                    if(map->agent_in_play == true){
-                        //temp_reward--;
+                    if(map->agent_in_play == true){ //Agent did not land in a goal state
+                        temp_reward -= w_step*1;
+                        for(int oa = 0; oa < n_agents; oa++){ //Penalty for being close to other agents
+                            if(oa != a && oa != agn){
+                                dist = abs(map->agent_vec.at(a).agent_x - map->agent_vec.at(oa).agent_x);
+                                dist += abs(map->agent_vec.at(a).agent_y - map->agent_vec.at(oa).agent_y);
+                                if(dist <= mcp->obs_dist){
+                                    temp_reward -= w_prox*1;
+                                }
+                            }
+                        }
                     }
                 }
             }

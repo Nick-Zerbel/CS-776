@@ -23,7 +23,7 @@ using namespace std;
 
 class monte_carlo{
 public:
-    vector <int> rollout_policy; //Contains set of actions for rollout policy
+    vector <int> rollout_policy;
     
     void set_mc_parameters(multi_tree *tp, int a);
     void create_root_nodes(multi_tree *tp, multi_agent *map);
@@ -76,6 +76,10 @@ public:
     double epsilon; //Exploration vs Exploitation parameter for UCB1
     int mc_iterations; //Number of level expansions MCTS does before running a credit eval
     double rollout_reward; //Reward given when goal is found in rollout
+    
+    //Weights
+    double w_rreward;
+    double w_dist;
     
     //Coordinates
     double ax; //Current agent x coordinate

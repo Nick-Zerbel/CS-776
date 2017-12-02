@@ -43,6 +43,12 @@ public:
     vector <double> episodes;
     vector <double> agent_steps;
     
+    //Weights
+    double w_greward;
+    double w_penalty;
+    double w_step;
+    double w_prox;
+    
     //Paramaters
     int x_dim; //X dimension of Gridworld
     int y_dim; //Y dimension of Gridworld
