@@ -43,12 +43,6 @@ public:
     vector <double> episodes;
     vector <double> agent_steps;
     
-    //Weights
-    double w_greward;
-    double w_penalty;
-    double w_step;
-    double w_prox;
-    
     //Paramaters
     int x_dim; //X dimension of Gridworld
     int y_dim; //Y dimension of Gridworld
@@ -58,6 +52,10 @@ public:
     double d_reward; //Difference Reward
     double goal_reward; //Credit Eval Reward for and agent reaching a goal
     double penalty; //Penalty incurred for an agent reaching an already captured goal
+    double step_penalty;
+    double prox_penalty;
+    
+    //Termination Detection
     bool gridworld_finished;
     bool goal_check;
     bool agents_at_goals;

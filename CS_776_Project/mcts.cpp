@@ -124,7 +124,6 @@ void monte_carlo::select(multi_tree *tp){
     }
     
 expansion_phase:
-    //cout << "lev: " << lev << endl;
     assert(p_lev == lev-1);
     assert(lev <= tp->ag_tree.at(a_num).tree_vec.size());
 }
@@ -245,6 +244,7 @@ void monte_carlo::reset_coordinates(){ //Reset agent coordinates to parent node 
 void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
     double q_val; q_val = 0; int act;
     double dist, x, y, xi, yi, x_root, y_root;
+    roll_count++;
     x = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).x;
     y = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).y;
     xi = x; yi = y;
@@ -252,7 +252,6 @@ void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
     y_root = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(0).y; //Starting Position
     
     for(int i = 0; i < rollout_steps; i++){
-        //act = rand() % 5; //Choose a random move from the 4 available moves
         act = rollout_policy.at(i);
         if(act == 0){
             x--;
@@ -290,17 +289,18 @@ void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
         for(int j = 0; j < map->n_agents; j++){
             if(x == map->goal_vec.at(j).goal_x && y == map->goal_vec.at(j).goal_y){
                 dist = abs(x-x_root) + abs(y-y_root); //Distance from starting position
-                q_val += (w_rreward*rollout_reward-w_dist*dist);
+                q_val += (rollout_reward-dist);
             }
         }
     }
+    fit += abs(q_val);
     tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).q_node = q_val;
 }
 
 //BACK-PROPAGATION-----------------------------------------------------------------------------------------------------------
 void monte_carlo::back_propagate(multi_tree *tp){
     double n; n = 0;
-    double q_val;
+    double q_val, q_prev;
     
     reward_vec.clear();
     
@@ -322,8 +322,10 @@ void monte_carlo::back_propagate(multi_tree *tp){
     for(int i = lev-1; i >= 0; i--){ //i = level
         for(int j = 0; j < tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.size(); j++){ //j = node
             if(parent_number == tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).n_number){
-                tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).visit_count++;
-                tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).q_node += q_val; //MCTS Q-value
+                q_prev = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).q_node;
+                tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).visit_count += 1;
+                node_visit = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).visit_count;
+                tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).q_node = q_prev + ((q_val-q_prev)/node_visit);
                 parent_number = tp->ag_tree.at(a_num).tree_vec.at(i).level_vec.at(j).p_number;
                 break;
             }
@@ -344,14 +346,17 @@ void monte_carlo::back_propagate(multi_tree *tp){
 }
 
 void monte_carlo::back_propagate_evals(multi_agent *map, multi_tree *tp, double reward, int agn, int l, int nn){
-    double q_val; int count;
+    double q_val, q_prev; int count;
     //count = count for number of nodes, nv = node visit count
     
     count = 0;
     for(int i = 0; i < tp->ag_tree.at(agn).tree_vec.at(l).level_vec.size(); i++){ //Update current node value
         if(nn == tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).n_number){
             q_val = reward;
-            tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).q_node += q_val;
+            q_prev = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).q_node;
+            tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).visit_count += 1;
+            node_visit = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).visit_count;
+            tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).q_node = q_prev + ((q_val-q_prev)/node_visit);
             parent_number = tp->ag_tree.at(agn).tree_vec.at(l).level_vec.at(i).p_number;
             count++;
             break;
@@ -373,7 +378,10 @@ void monte_carlo::back_propagate_evals(multi_agent *map, multi_tree *tp, double 
     for(int i = l-1; i >= 0; i--){ //i = level
         for(int j = 0; j < tp->ag_tree.at(agn).tree_vec.at(i).level_vec.size(); j++){ //j = node
             if(parent_number == tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).n_number){
-                tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).q_node += q_val; //MCTS Q-value
+                q_prev = tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).q_node;
+                tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).visit_count += 1;
+                node_visit = tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).visit_count;
+                tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).q_node = q_prev + ((q_val-q_prev)/node_visit);
                 parent_number = tp->ag_tree.at(agn).tree_vec.at(i).level_vec.at(j).p_number;
                 break;
             }

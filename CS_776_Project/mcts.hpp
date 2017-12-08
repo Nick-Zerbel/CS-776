@@ -77,9 +77,9 @@ public:
     int mc_iterations; //Number of level expansions MCTS does before running a credit eval
     double rollout_reward; //Reward given when goal is found in rollout
     
-    //Weights
-    double w_rreward;
-    double w_dist;
+    //EA
+    double fit;
+    double roll_count;
     
     //Coordinates
     double ax; //Current agent x coordinate

@@ -105,13 +105,13 @@ void gridworld::calculate_global(multi_agent *map, monte_carlo *mcp, multi_tree 
                     map->check_agent_status(a);
                     map->check_agent_coordinates(a, map->agent_vec.at(a).agent_x, map->agent_vec.at(a).agent_y);
                     if(map->agent_in_play == false && map->unique_pos == true){
-                        g_reward += w_greward*goal_reward;
+                        g_reward += goal_reward;
                         for(int oa = 0; oa < n_agents; oa++){ //Penalty for being close to other agents
                             if(oa != a){
                                 dist = abs(map->agent_vec.at(a).agent_x - map->agent_vec.at(oa).agent_x);
                                 dist += abs(map->agent_vec.at(a).agent_y - map->agent_vec.at(oa).agent_y);
                                 if(dist <= mcp->obs_dist){
-                                    g_reward -= w_prox*1;
+                                    g_reward -= prox_penalty;
                                 }
                             }
                         }
@@ -119,13 +119,13 @@ void gridworld::calculate_global(multi_agent *map, monte_carlo *mcp, multi_tree 
                         assert(i == end_lev.at(a));
                     }
                     if(map->agent_in_play == false && map->unique_pos == false){
-                        g_reward -= w_penalty*penalty;
+                        g_reward -= penalty;
                         for(int oa = 0; oa < n_agents; oa++){ //Penalty for being close to other agents
                             if(oa != a){
                                 dist = abs(map->agent_vec.at(a).agent_x - map->agent_vec.at(oa).agent_x);
                                 dist += abs(map->agent_vec.at(a).agent_y - map->agent_vec.at(oa).agent_y);
                                 if(dist <= mcp->obs_dist){
-                                    g_reward -= w_prox*1;
+                                    g_reward -= prox_penalty;
                                 }
                             }
                         }
@@ -133,13 +133,13 @@ void gridworld::calculate_global(multi_agent *map, monte_carlo *mcp, multi_tree 
                         assert(i == end_lev.at(a));
                     }
                     if(map->agent_in_play == true){
-                        g_reward -= w_step*1;
+                        g_reward -= step_penalty;
                         for(int oa = 0; oa < n_agents; oa++){ //Penalty for being close to other agents
                             if(oa != a){
                                 dist = abs(map->agent_vec.at(a).agent_x - map->agent_vec.at(oa).agent_x);
                                 dist += abs(map->agent_vec.at(a).agent_y - map->agent_vec.at(oa).agent_y);
                                 if(dist <= mcp->obs_dist){
-                                    g_reward -= w_prox*1;
+                                    g_reward -= prox_penalty;
                                 }
                             }
                         }
@@ -182,13 +182,13 @@ void gridworld::calculate_difference(multi_agent *map, monte_carlo *mcp, multi_t
                     map->check_agent_status(a);
                     map->check_agent_coordinates(a, map->agent_vec.at(a).agent_x, map->agent_vec.at(a).agent_y);
                     if(map->agent_in_play == false && map->unique_pos == true){ //Agent is first to a goal
-                        temp_reward += w_greward*goal_reward;
+                        temp_reward += goal_reward;
                         for(int oa = 0; oa < n_agents; oa++){ //Penalty for being close to other agents
                             if(oa != a && oa != agn){
                                 dist = abs(map->agent_vec.at(a).agent_x - map->agent_vec.at(oa).agent_x);
                                 dist += abs(map->agent_vec.at(a).agent_y - map->agent_vec.at(oa).agent_y);
                                 if(dist <= mcp->obs_dist){
-                                    temp_reward -= w_prox*1;
+                                    temp_reward -= prox_penalty;
                                 }
                             }
                         }
@@ -196,13 +196,13 @@ void gridworld::calculate_difference(multi_agent *map, monte_carlo *mcp, multi_t
                         assert(i == end_lev.at(a));
                     }
                     if(map->agent_in_play == false && map->unique_pos == false){ //Agent arrives at goal occupied by another
-                        temp_reward -= w_penalty*penalty;
+                        temp_reward -= penalty;
                         for(int oa = 0; oa < n_agents; oa++){ //Penalty for being close to other agents
                             if(oa != a && oa != agn){
                                 dist = abs(map->agent_vec.at(a).agent_x - map->agent_vec.at(oa).agent_x);
                                 dist += abs(map->agent_vec.at(a).agent_y - map->agent_vec.at(oa).agent_y);
                                 if(dist <= mcp->obs_dist){
-                                    temp_reward -= w_prox*1;
+                                    temp_reward -= prox_penalty;
                                 }
                             }
                         }
@@ -210,13 +210,13 @@ void gridworld::calculate_difference(multi_agent *map, monte_carlo *mcp, multi_t
                         assert(i == end_lev.at(a));
                     }
                     if(map->agent_in_play == true){ //Agent did not land in a goal state
-                        temp_reward -= w_step*1;
+                        temp_reward -= step_penalty;
                         for(int oa = 0; oa < n_agents; oa++){ //Penalty for being close to other agents
                             if(oa != a && oa != agn){
                                 dist = abs(map->agent_vec.at(a).agent_x - map->agent_vec.at(oa).agent_x);
                                 dist += abs(map->agent_vec.at(a).agent_y - map->agent_vec.at(oa).agent_y);
                                 if(dist <= mcp->obs_dist){
-                                    temp_reward -= w_prox*1;
+                                    temp_reward -= prox_penalty;
                                 }
                             }
                         }

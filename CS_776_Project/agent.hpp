@@ -36,20 +36,24 @@ class multi_agent{
 public:
     vector <agent> agent_vec;
     vector <agent> agent_start_pos;
+    vector <agent> agent_list;
     vector <goal> goal_vec;
     vector <goal> goal_start_pos;
+    vector <goal> goal_list;
     
-    void create_new_sys(int max_a, int xd, int yd); //Create new goal and agent coordinates
+    void create_config_list(int max_a, int xd, int yd, int nconfigs); //Create new goal and agent coordinates
     
     //Goal Functions
     void create_goal_vec();
     void assign_goal_coordinates();
+    void record_goal_list();
     void check_goal_coordinates(int n, double xc, double yc);
     void check_goal_status(int gn); //Checks if goal is still in play
     
     //Agent Functions
     void create_agent_vec(int n, int xd, int yd);
     void assign_agent_coordinates(int n);
+    void record_agent_list();
     void check_agent_coordinates(int n, double x, double y);
     void agent_move(int n, int act); //Agent moves based on information collects from MCTS and Reward Evaluation
     void check_agent_status(int an);

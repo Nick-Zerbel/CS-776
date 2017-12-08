@@ -21,6 +21,8 @@ void multi_agent::create_agent_vec(int n, int xd, int yd){
         agent_vec.at(i).agent_y = -1;
     }
     
+    
+    //Create Coordinates
     for(int i = 0; i < n_agents; i++){
         x = (double)(rand() % xdim);
         y = (double)(rand() % ydim);
@@ -41,15 +43,6 @@ void multi_agent::create_agent_vec(int n, int xd, int yd){
         check_agent_coordinates(i, x ,y);
         assert(unique_pos == true);
     }
-    ofstream ag;
-    ag.open("Agent_Coordinates.txt", ios::app);
-    for(int i = 0; i < n_agents; i++){
-        ag << agent_vec.at(i).agent_x << "\t";
-        ag << agent_vec.at(i).agent_y << "\n";
-    }
-    ag << endl;
-    ag.close();
-    agent_start_pos = agent_vec;
 }
 
 void multi_agent::assign_agent_coordinates(int n){
@@ -128,6 +121,7 @@ void multi_agent::create_goal_vec(){
         goal_vec.at(i).goal_y = -1;
     }
     
+    //Create Coordinates
     for(int i = 0; i < n_agents; i++){
         x = (double)(rand() % xdim);
         y = (double)(rand() % ydim);
@@ -148,15 +142,6 @@ void multi_agent::create_goal_vec(){
         check_goal_coordinates(i, x, y);
         assert(unique_pos == true);
     }
-    ofstream gs;
-    gs.open("Goal_Coordinates.txt", ios::app);
-    for(int i = 0; i < n_agents; i++){
-        gs << goal_vec.at(i).goal_x << "\t";
-        gs << goal_vec.at(i).goal_y << "\n";
-    }
-    gs << endl;
-    gs.close();
-    goal_start_pos = goal_vec;
 }
 
 void multi_agent::assign_goal_coordinates(){
@@ -199,14 +184,20 @@ void multi_agent::check_goal_status(int gn){
     }
 }
 
-void multi_agent::create_new_sys(int max_a, int xd, int yd){
-    agent_vec.clear();
-    goal_vec.clear();
-    create_agent_vec(max_a, xd, yd);
-    create_goal_vec();
-    agent_start_pos = agent_vec;
-    goal_start_pos = goal_vec;
-    agent_vec.clear();
-    goal_vec.clear();
+void multi_agent::create_config_list(int max_a, int xd, int yd, int nconfigs){
+    for(int j = 0; j < nconfigs; j++){ //Maximum number of configurations
+        create_agent_vec(max_a, xd, yd);
+        create_goal_vec();
+        for(int k = 0; k < max_a; k++){ //Maximum number of agents
+            agent_list.push_back(agent_vec.at(k));
+            goal_list.push_back(goal_vec.at(k));
+        }
+        agent_vec.clear();
+        goal_vec.clear();
+    }
+    agent a; goal g;
+    for(int i = 0; i < max_a; i++){ //Create start pos vectors
+        agent_start_pos.push_back(a);
+        goal_start_pos.push_back(g);
+    }
 }
-
