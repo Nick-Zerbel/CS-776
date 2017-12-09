@@ -26,7 +26,9 @@ class gridworld{
 public:
     void initialize_parameters(multi_agent *map, monte_carlo *mcp);
     void cred_evals(multi_agent *map, multi_tree* tp, monte_carlo *mcp);
+    void system_rollout(multi_agent *map, multi_tree* tp, monte_carlo *mcp);
     void check_goal_conditions(multi_agent *map); //Check if all agents have made it to a goal
+    void run_mcts(multi_agent *map, monte_carlo *mcp, multi_tree *tp, int sruns, int ai, int amax, int rmax, int incr);
     
     //Credit Evaluation
     vector <int> node_vec; //Keeps track of current nodes during credit evaluations
@@ -54,6 +56,8 @@ public:
     double penalty; //Penalty incurred for an agent reaching an already captured goal
     double step_penalty;
     double prox_penalty;
+    double final_lev;
+    int max_lev;
     
     //Termination Detection
     bool gridworld_finished;

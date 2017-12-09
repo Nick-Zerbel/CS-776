@@ -38,40 +38,6 @@ void record_best_policy(ea *eap){ //Records best policy and fitness of all time 
     best_p.close(); best_f.close();
 }
 
-void run_mcts(gridworld *gp, multi_agent *map, monte_carlo *mcp, multi_tree *tp, int sruns, int ai, int amax, int rmax, int incr){
-    int group; group = 0;
-    for(gp->n_agents = ai; gp->n_agents <= amax;){
-        for(int s = 0; s < sruns; s++){
-            gp->initialize_parameters(map, mcp);
-            mcp->create_root_nodes(tp, map);
-            while(gp->gridworld_finished == false){
-                gp->learn_its++; //Tracks the number of learning episodes until MCTS find a solution
-                for(int anum = 0; anum < gp->n_agents; anum++){ //anum = agent number
-                    mcp->set_mc_parameters(tp, anum);
-                    mcp->mc_search(tp, map); //Runs MCTS for defined number of expansions
-                    mcp->n_num_vec.at(anum) = mcp->node_number; //Used to track what the current node number is in each tree
-                }
-                gp->cred_evals(map, tp, mcp);
-                gp->check_goal_conditions(map);
-                if(gp->goal_check == true){
-                    gp->gridworld_finished = true;
-                }
-                if(gp->gridworld_finished == false){
-                    gp->reset_all_agents(map, tp);
-                }
-                if(gp->learn_its >= rmax){
-                    break;
-                }
-            }
-            //Record Information
-            gp->episodes.at(group) = (double)gp->learn_its;
-            gp->clear_all_vectors(map, mcp, tp);
-        }
-        group++;
-        gp->n_agents += incr;
-    }
-}
-
 void record_parameters(gridworld *gp, monte_carlo *mcp, limit *lp, ea *eap, int maxr, int na, int mg, int sr){
     ofstream tp; tp.open("test_parameters.txt");
     tp << "X-Dim: " << gp->x_dim << " Y-Dim: " << gp->y_dim << "\n";
@@ -121,23 +87,24 @@ int main() {
     int starting_agents = max_agents; //Initial number of agents being tested
     int n_groups = ((max_agents - starting_agents)/agent_increment) + 1; //Number of agent groups being tested
     int stat_runs = 1; //Number of statistical runs for MCTS
-    int max_run = 200; //Cuts off the simulation if the number of iterations exceed this amount
-    mcp->obs_dist = 4; //Observational Distance
-    mcp->epsilon = 0; //UCB1 exploration constant (0 = greedy action selection)
+    int max_run = 500; //Cuts off the simulation if the number of iterations exceed this amount
+    mcp->obs_dist = 5; //Observational Distance
+    mcp->epsilon = 10; //UCB1 exploration constant (0 = greedy action selection)
     mcp->rollout_steps = 10; //Number of rollout steps during random rollout
     mcp->mc_iterations = 1; //Number of iterations of MCTS each agent performs
+    gp->max_lev = 30; mcp->max_lev = gp->max_lev;
     
     //EA Parameters
     int ea_s_runs = 30; //Number of stat runs for the EA
-    int max_gen = 30; //Maximum number of generations to evolve
-    int n_grid_configs = 5; //Number of Gridworld configurations to test each generation
+    int max_gen = 80; //Maximum number of generations to evolve
+    int n_grid_configs = 10; //Number of Gridworld configurations to test each generation
     lp->upper = 100; //Upper limit of EA weights
     lp->lower = 0; //Lower limit of EA weights
-    eap->pop_size = 12; //Population size (must be even when divided by 2)
+    eap->pop_size = 54; //Population size (must be even when divided by 3)
     eap->mu = eap->pop_size;
     eap->lambda = eap->mu;
     eap->p_cross = 0.9; //Probability of Crossover
-    eap->p_mut = 0.1; //Probability of mutation
+    eap->p_mut = 0.01; //Probability of mutation
     eap->n_weights = 5; //Number of weights the GA is evolving
     eap->s_size_r = (int)floor((log(lp->upper)/log(2))+1); //String Size for reward shaping
     eap->a_size = (eap->n_weights*eap->s_size_r) + (3*mcp->rollout_steps); //Array Size
@@ -147,7 +114,9 @@ int main() {
     
     //Fitness Variables
     double mr = (double)max_run; //Double version of maximum number of MCTS runs
+    double ml = (double)gp->max_lev;
     double variants = (double)n_grid_configs;
+    double n_successful, actual_runs, actual_lev, speed, reliability, optimality;
     clear_txt_files(); //Clear all txt files which get appended
     
     ofstream max_fit, avg_fit, min_fit;
@@ -163,9 +132,9 @@ int main() {
     
     for(int srn = 0; srn < ea_s_runs; srn++){ //Stat Runs for EA
         eap->create_pop();
-        //cout << "Stat Run: " << srn << endl;
+        cout << "Stat Run: " << srn << endl;
         for(int i = 0; i < max_gen; i++){
-            //cout << "Gen: " << i << endl;
+            cout << "Gen: " << i << endl;
             //Evaluate Population
             for(int j = 0; j < eap->pop_size; j++){
                 assign_values(mcp, gp, eap, lp, eap->pop.at(j).pol); //Assign Rewards and Penalties
@@ -174,17 +143,25 @@ int main() {
                     mcp->rollout_policy.at(rp) = (int)round(eap->num*(4/(pow(2,3)-1)));
                 }
                 eap->pfit_vec.at(0) = 0;
+                n_successful = variants; actual_runs = 0; actual_lev = 0;
                 for(int nc = 0; nc < n_grid_configs; nc++){
-                    mcp->fit = 0;
-                    mcp->roll_count = 0;
                     for(int na = 0; na < max_agents; na++){
                         map->agent_start_pos.at(na) = map->agent_list.at(max_agents*nc + na);
                         map->goal_start_pos.at(na) = map->goal_list.at(max_agents*nc + na);
                     }
-                    run_mcts(gp, map, mcp, tp, stat_runs, starting_agents, max_agents, max_run, agent_increment);
-                    eap->pfit_vec.at(j) += (mcp->fit/mcp->roll_count)+(mr - gp->episodes.at(0));
-                    eap->pfit_vec.at(j) /= variants;
+                    gp->run_mcts(map, mcp, tp, stat_runs, starting_agents, max_agents, max_run, agent_increment);
+                    if(gp->episodes.at(0) >= mr){
+                        n_successful--;
+                    }
+                    actual_runs += gp->episodes.at(0);
+                    actual_lev += gp->final_lev;
                 }
+                actual_runs /= variants; //Average number of runs
+                actual_lev /= variants; //Average finishing level
+                optimality = (ml - actual_lev)/ml; //Percentage Optimality
+                speed = (mr-actual_runs)/mr; //Percentage Speed
+                reliability = n_successful/variants; //Percentage Reliability
+                eap->pfit_vec.at(j) = speed + reliability + optimality;
             }
             eap->re_order();
             eap->calc_fit_prob();
@@ -208,17 +185,25 @@ int main() {
                     mcp->rollout_policy.at(rp) = (int)round(eap->num*(4/(pow(2,3)-1)));
                 }
                 eap->ofit_vec.at(j) = 0;
+                n_successful = variants; actual_runs = 0; actual_lev = 0;
                 for(int nc = 0; nc < n_grid_configs; nc++){
-                    mcp->fit = 0;
-                    mcp->roll_count = 0;
                     for(int na = 0; na < max_agents; na++){
                         map->agent_start_pos.at(na) = map->agent_list.at(max_agents*nc + na);
                         map->goal_start_pos.at(na) = map->goal_list.at(max_agents*nc + na);
                     }
-                    run_mcts(gp, map, mcp, tp, stat_runs, starting_agents, max_agents, max_run, agent_increment);
-                    eap->ofit_vec.at(j) += (mcp->fit/mcp->roll_count)+(mr - gp->episodes.at(0));
-                    eap->ofit_vec.at(j) /= variants;
+                    gp->run_mcts(map, mcp, tp, stat_runs, starting_agents, max_agents, max_run, agent_increment);
+                    if(gp->episodes.at(0) >= mr){
+                        n_successful--;
+                    }
+                    actual_runs += gp->episodes.at(0);
+                    actual_lev += gp->final_lev;
                 }
+                actual_runs /= variants; //Average number of runs
+                actual_lev /= variants; //Average finishing level
+                optimality = (ml - actual_lev)/ml; //Percentage Optimality
+                speed = (mr-actual_runs)/mr; //Percentage Speed
+                reliability = n_successful/variants; //Percentage Reliability
+                eap->ofit_vec.at(j) = reliability + speed + optimality;
             }
             eap->create_new_pop();
         }

@@ -109,27 +109,40 @@ int ea::select_parent(){
 }
 
 void ea::crossover(){
-    double prob; int p1, p2, cp;
+    double prob; int p1, p2, p3, cp1, cp2;
     for(int i = 0; i < lambda;){ //Replace bottom half of population with offspring from top half
         prob = (double)(rand())/RAND_MAX;
         p1 = select_parent(); //Parent 1
         p2 = select_parent(); //Parent 2
+        p3 = select_parent(); //Parent 3
         if(prob <= p_cross){
-            cp = (rand() % (a_size-2)) + 1; //Crossover Point
-            for(int j = 0; j < cp; j++){
+            cp1 = (rand() % (a_size-10)) + 1; //Crossover Point 1
+            cp2 = (rand() % (a_size-2)) + 1; //Crossover Point 2
+            while(cp1 >= cp2){
+                cp2 = (rand() % (a_size-2)) + 1; //Crossover Point 2
+            }
+            for(int j = 0; j < cp1; j++){
                 new_pop.at(i).pol.at(j) = pop.at(p1).pol.at(j);
                 new_pop.at(i+1).pol.at(j) = pop.at(p2).pol.at(j);
+                new_pop.at(i+2).pol.at(j) = pop.at(p3).pol.at(j);
             }
-            for(int j = cp; j < a_size; j++){
+            for(int j = cp1; j < cp2; j++){
                 new_pop.at(i).pol.at(j) = pop.at(p2).pol.at(j);
+                new_pop.at(i+1).pol.at(j) = pop.at(p3).pol.at(j);
+                new_pop.at(i+2).pol.at(j) = pop.at(p1).pol.at(j);
+            }
+            for(int j = cp2; j < a_size; j++){
+                new_pop.at(i).pol.at(j) = pop.at(p3).pol.at(j);
                 new_pop.at(i+1).pol.at(j) = pop.at(p1).pol.at(j);
+                new_pop.at(i+2).pol.at(j) = pop.at(p2).pol.at(j);
             }
         }
         if(prob > p_cross){
             new_pop.at(i) = pop.at(p1);
             new_pop.at(i+1) = pop.at(p2);
+            new_pop.at(i+2) = pop.at(p3);
         }
-        i += 2;
+        i += 3;
     }
     assert(new_pop.size() == pop_size);
 }

@@ -183,7 +183,10 @@ void monte_carlo::move_right(multi_tree *tp){
 void monte_carlo::no_move(multi_tree *tp){
     reset_coordinates();
     check_boundaries(ax, ay);
-    prune(tp, lev-(x_lim+y_lim));
+    if(lev > max_lev){
+        action_check = false;
+    }
+    prune(tp, lev-5);
     if(action_check == true){
         update_node_numbers(tp);
         tp->create_node(lev, n_nodes, ax, ay, a_num, node_number, parent_number, 4);
@@ -192,6 +195,9 @@ void monte_carlo::no_move(multi_tree *tp){
 
 void monte_carlo::pruning(multi_tree *tp){
     check_boundaries(ax, ay); //Agent cannot go out of bounds
+    if(lev > max_lev){
+        action_check = false;
+    }
     if(action_check == true){
         prune(tp, lev); //Agent cannot revisit a previous state during a MCTS simulation
     }
@@ -244,7 +250,6 @@ void monte_carlo::reset_coordinates(){ //Reset agent coordinates to parent node 
 void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
     double q_val; q_val = 0; int act;
     double dist, x, y, xi, yi, x_root, y_root;
-    roll_count++;
     x = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).x;
     y = tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).y;
     xi = x; yi = y;
@@ -293,7 +298,6 @@ void monte_carlo::rollout(multi_tree *tp, multi_agent *map, int n){
             }
         }
     }
-    fit += abs(q_val);
     tp->ag_tree.at(a_num).tree_vec.at(lev).level_vec.at(n).q_node = q_val;
 }
 

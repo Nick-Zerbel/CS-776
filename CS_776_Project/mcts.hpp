@@ -60,6 +60,7 @@ public:
     bool action_check; //Flags possible actions as valid or invalid
     double parent_visit; //Number of times parent has been visited
     double node_visit; //Number of times child has been visited
+    int max_lev;
     int lev; //Current level of the tree
     int p_lev; //Current parent level
     int n_nodes; //Number of nodes currently in a level in the tree
@@ -76,10 +77,6 @@ public:
     double epsilon; //Exploration vs Exploitation parameter for UCB1
     int mc_iterations; //Number of level expansions MCTS does before running a credit eval
     double rollout_reward; //Reward given when goal is found in rollout
-    
-    //EA
-    double fit;
-    double roll_count;
     
     //Coordinates
     double ax; //Current agent x coordinate
